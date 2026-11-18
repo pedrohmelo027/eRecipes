@@ -14,7 +14,6 @@ export interface Categoria {
   nome: string;
 }
 
-/** Enum Unidade do diagrama de classes; mesmos valores de backend/src/models/Unidade.ts. */
 export const UNIDADES_MEDIDA = ['xícara', 'unidade', 'kg', 'g', 'litro', 'ml', 'copo'] as const;
 
 export type UnidadeMedida = (typeof UNIDADES_MEDIDA)[number];
@@ -25,7 +24,6 @@ export interface Ingrediente {
 }
 
 export interface IngredienteDisponivel extends Ingrediente {
-  /** Outros nomes do mesmo ingrediente (ex.: aipim e macaxeira para mandioca). */
   sinonimos: string[];
 }
 
@@ -59,14 +57,12 @@ export interface Pagina<T> {
 }
 
 export interface ResultadoBusca extends Receita {
-  /** Ingredientes da receita que não estão na lista informada. */
   ingredientesFaltando: string[];
 }
 
 export interface ItemReceitaEntrada {
   ingredienteId?: number;
   nome?: string;
-  /** Número ou texto como digitado: "2", "1/2", "1 1/2", "0,5", "meia". */
   quantidade?: number | string | null;
   unidade?: UnidadeMedida | null;
 }

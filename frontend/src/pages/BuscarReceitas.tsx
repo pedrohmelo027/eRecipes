@@ -16,21 +16,28 @@ interface EstadoBusca {
   resultado: ResultadoBusca[] | null;
 }
 
+const BUSCA_VAZIA: EstadoBusca = { ingredientes: [], resultado: null };
+
 function lerUltimaBusca(): EstadoBusca {
   try {
     const salvo = sessionStorage.getItem(CHAVE);
-    if (salvo) {
-      const busca: EstadoBusca = JSON.parse(salvo);
-      // Buscas salvas antes da lista de ingredientes faltando são descartadas
-      if (busca.resultado?.every((r) => Array.isArray(r.ingredientesFaltando))) return busca;
-      return { ...busca, resultado: null };
-    }
+    if (!salvo) return BUSCA_VAZIA;
+    const busca: EstadoBusca = JSON.parse(salvo);
+    const resultadoValido = busca.resultado?.every((r) => Array.isArray(r.ingredientesFaltando));
+    return resultadoValido ? busca : { ...busca, resultado: null };
   } catch {
-    // sessionStorage indisponível: começa uma busca nova
+    return BUSCA_VAZIA;
   }
-  return { ingredientes: [], resultado: null };
 }
 
+function salvarBusca(busca: EstadoBusca): boolean {
+  try {
+    sessionStorage.setItem(CHAVE, JSON.stringify(busca));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function BuscarReceitas() {
   const [estado, setEstado] = useState<EstadoBusca>(lerUltimaBusca);
@@ -40,18 +47,13 @@ export function BuscarReceitas() {
   function atualizar(parcial: Partial<EstadoBusca> | ((atual: EstadoBusca) => Partial<EstadoBusca>)) {
     setEstado((atual) => {
       const novo = { ...atual, ...(typeof parcial === 'function' ? parcial(atual) : parcial) };
-      try {
-        sessionStorage.setItem(CHAVE, JSON.stringify(novo));
-      } catch {
-        // sem sessionStorage a busca só não fica salva
-      }
+      salvarBusca(novo);
       return novo;
     });
   }
 
   const chaveBusca = estado.ingredientes.map((i) => i.id).join(',');
 
-  // Busca automaticamente sempre que a seleção de ingredientes ou a categoria muda
   useEffect(() => {
     if (!chaveBusca) {
       setErro('');

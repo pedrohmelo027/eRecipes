@@ -8,7 +8,6 @@ export const PREFIXO_FOTO = '/api/uploads/';
 export const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
 export const FOTO_URL_REGEX = /^\/api\/uploads\/[a-f0-9-]{36}\.(jpg|png|webp|gif)$/;
 
-/** Detecta o formato pelos primeiros bytes (não confia no Content-Type enviado). */
 function detectarExtensao(b: Buffer): string | null {
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
   if (b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
@@ -32,7 +31,6 @@ export class FotoService {
     return `${PREFIXO_FOTO}${nome}`;
   }
 
-  /** Apaga do disco uma foto enviada (ignora URLs que não são uploads locais). */
   static async remover(fotoUrl: string | null | undefined): Promise<void> {
     if (!fotoUrl || !FOTO_URL_REGEX.test(fotoUrl)) return;
     await unlink(path.join(env.uploadDir, path.basename(fotoUrl))).catch(() => undefined);

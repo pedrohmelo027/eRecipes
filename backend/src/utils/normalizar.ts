@@ -6,11 +6,6 @@ export function chaveIngrediente(nome: string): string {
   return normalizarNomeIngrediente(nome).normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-/**
- * Possíveis formas no singular de um nome no plural ("ovos" → "ovo",
- * "limões" → "limão", "tomates cereja" → "tomate cereja").
- * Só a primeira palavra é alterada, que é onde o plural costuma estar.
- */
 export function formasSingulares(nome: string): string[] {
   const [primeira, ...resto] = normalizarNomeIngrediente(nome).split(' ');
   const candidatas: string[] = [];
@@ -28,7 +23,6 @@ export function formasSingulares(nome: string): string[] {
   return [...new Set(candidatas)].map((p) => [p, ...resto].join(' '));
 }
 
-/** Possíveis formas no plural, para achar um ingrediente que foi cadastrado no plural. */
 export function formasPlurais(nome: string): string[] {
   const [primeira, ...resto] = normalizarNomeIngrediente(nome).split(' ');
   const candidatas = primeira.endsWith('ão')

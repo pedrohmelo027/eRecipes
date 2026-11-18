@@ -6,14 +6,13 @@ import type { ItemReceita, Receita } from '../api/tipos';
 import { Aviso } from '../components/Aviso';
 import { Carregando } from '../components/Carregando';
 import { FotoReceita } from '../components/CardReceita';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { formatarQuantidade } from '../utils/quantidade';
 
 function formatarItem({ quantidade, unidade }: ItemReceita) {
   const qtd = quantidade !== null ? formatarQuantidade(quantidade) : '';
   return [qtd, unidade].filter(Boolean).join(' ');
 }
-
 
 export function DetalheReceita() {
   const { id } = useParams();

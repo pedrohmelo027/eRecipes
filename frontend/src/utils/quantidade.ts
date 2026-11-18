@@ -7,7 +7,6 @@ const FRACOES: [number, string][] = [
   [3 / 4, '3/4'],
 ];
 
-/** Mostra a quantidade como na receita: 0.5 → "1/2", 1.5 → "1 1/2", 0.33 → "1/3". */
 export function formatarQuantidade(valor: number): string {
   const inteiro = Math.floor(valor);
   const resto = valor - inteiro;

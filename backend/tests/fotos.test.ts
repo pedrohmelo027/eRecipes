@@ -6,7 +6,6 @@ import { env } from '../src/config/env';
 import { Categoria } from '../src/models';
 import { criarUsuario, fecharBanco, resetarBanco } from './helpers';
 
-// PNG 1x1 válido
 const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   'base64',

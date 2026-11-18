@@ -4,7 +4,7 @@ import type { TipoUsuario, Usuario } from '../api/tipos';
 import { usuarioApi } from '../api/usuarioApi';
 import { Aviso } from '../components/Aviso';
 import { Carregando } from '../components/Carregando';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 interface Edicao {
   id: number;
@@ -12,7 +12,6 @@ interface Edicao {
   email: string;
   tipoUsuario: TipoUsuario;
 }
-
 
 export function AdminUsuarios() {
   const { usuario: eu } = useAuth();

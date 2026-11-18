@@ -7,11 +7,6 @@ const FRACOES_UNICODE: Record<string, string> = {
   '⅛': '1/8',
 };
 
-/**
- * Converte o texto de quantidade digitado na receita em número.
- * Aceita "2", "1,5", "0.5", "1/2", "1 1/2", "1 e 1/2", "½", "1½",
- * "meia", "meio" e "1 e meia". Retorna NaN se não entender.
- */
 export function converterQuantidade(texto: string): number {
   let s = texto.trim().toLowerCase();
   for (const [simbolo, fracao] of Object.entries(FRACOES_UNICODE)) s = s.replaceAll(simbolo, ` ${fracao}`);

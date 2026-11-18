@@ -7,8 +7,8 @@ import { UNIDADES_MEDIDA, type Ingrediente, type ReceitaEntrada, type UnidadeMed
 import { Aviso } from '../components/Aviso';
 import { Campo } from '../components/Campo';
 import { Carregando } from '../components/Carregando';
-import { useCategorias } from '../components/FiltroCategorias';
-import { useAuth } from '../contexts/AuthContext';
+import { useCategorias } from '../hooks/useCategorias';
+import { useAuth } from '../hooks/useAuth';
 import { formatarQuantidade } from '../utils/quantidade';
 
 interface LinhaItem {
@@ -41,12 +41,10 @@ const vazio = (): Formulario => ({
   itens: [novaLinha()],
 });
 
-
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
 
 const numeroOuNulo = (valor: string) => (valor.trim() === '' ? null : Number(valor.replace(',', '.')));
-
 
 export function FormReceita() {
   const { id } = useParams();

@@ -64,13 +64,6 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
     }
   }
 
-  /**
-   * getIngredientesByReceitas (diagrama de classes, RN06): retorna as receitas
-   * que usam ao menos um dos ingredientes informados, filtrando pela categoria
-   * quando ela é informada. Cada receita vem com `ingredientesFaltando`, e as
-   * que dá para fazer só com o que o ator tem (nada faltando) vêm primeiro.
-   * Receitas de autores inativos não aparecem (RN09).
-   */
   static async getIngredientesByReceitas(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
     if (!ingredientes.length) {
       throw new AppError(400, 'Informe ao menos um ingrediente', { ingredientes: 'Obrigatório' });
@@ -104,7 +97,6 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
       );
   }
 
-  /** Nomes dos ingredientes da receita que não estão entre os disponíveis, em ordem alfabética. */
   private static faltando(receita: Receita, disponiveis: Set<number>): string[] {
     return (receita.itens ?? [])
       .filter((item) => !disponiveis.has(item.ingrediente!.id))

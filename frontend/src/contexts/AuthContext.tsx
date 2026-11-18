@@ -1,18 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { authApi } from '../api/authApi';
 import { definirToken, obterToken, quandoSessaoExpirar } from '../api/http';
-import type { Receita, Usuario } from '../api/tipos';
-
-interface ValorAuth {
-  usuario: Usuario | null;
-  carregando: boolean;
-  ehAdmin: boolean;
-  entrar: (email: string, senha: string) => Promise<Usuario>;
-  sair: () => void;
-  podeAlterar: (receita: Receita) => boolean;
-}
-
-const AuthContext = createContext<ValorAuth | null>(null);
+import type { Usuario } from '../api/tipos';
+import { AuthContext, type ValorAuth } from './authContexto';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -53,11 +43,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [usuario, carregando, entrar, sair]);
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth precisa estar dentro de <AuthProvider>');
-  return ctx;
 }
