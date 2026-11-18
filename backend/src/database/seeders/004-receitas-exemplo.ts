@@ -2,6 +2,7 @@ import type { MigrationFn } from 'umzug';
 import type { Sequelize } from 'sequelize';
 import { env } from '../../config/env';
 import { Categoria, Ingrediente, ItemReceita, Receita, Usuario } from '../../models';
+import type { UnidadeMedida } from '../../models/UnidadeMedida';
 
 interface ReceitaExemplo {
   titulo: string;
@@ -9,7 +10,7 @@ interface ReceitaExemplo {
   modoPreparo: string;
   tempoPreparo: number;
   rendimento: number;
-  itens: [nome: string, quantidade: number | null, unidade: string | null][];
+  itens: [nome: string, quantidade: number | null, unidade: UnidadeMedida | null][];
 }
 
 const EXEMPLOS: ReceitaExemplo[] = [

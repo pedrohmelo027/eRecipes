@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UNIDADES_MEDIDA } from '../models/UnidadeMedida';
 import { TipoUsuario } from '../models/Usuario';
 import { FOTO_URL_REGEX } from '../services/FotoService';
 
@@ -55,7 +56,10 @@ const itemSchema = z
       .positive('Quantidade deve ser maior que zero')
       .max(999999.99)
       .nullish(),
-    unidade: z.string().trim().max(30).nullish(),
+    unidade: z
+      .enum(UNIDADES_MEDIDA, { errorMap: () => ({ message: 'Escolha uma unidade da lista' }) })
+      .nullish()
+      .or(z.literal('').transform(() => null)),
   })
   .refine((i) => i.ingredienteId || i.nome, { message: 'Informe o ingrediente' });
 

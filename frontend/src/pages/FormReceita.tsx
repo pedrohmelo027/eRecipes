@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { catalogoApi } from '../api/catalogoApi';
 import { enviarFoto, ErroApi } from '../api/http';
 import { receitaApi } from '../api/receitaApi';
-import type { Ingrediente, ReceitaEntrada } from '../api/tipos';
+import { UNIDADES_MEDIDA, type Ingrediente, type ReceitaEntrada, type UnidadeMedida } from '../api/tipos';
 import { Aviso } from '../components/Aviso';
 import { Campo } from '../components/Campo';
 import { Carregando } from '../components/Carregando';
@@ -14,7 +14,7 @@ interface LinhaItem {
   chave: number;
   nome: string;
   quantidade: string;
-  unidade: string;
+  unidade: UnidadeMedida | '';
 }
 
 interface Formulario {
@@ -40,7 +40,6 @@ const vazio = (): Formulario => ({
   itens: [novaLinha()],
 });
 
-const UNIDADES = ['unidade', 'g', 'kg', 'ml', 'litro', 'xícara', 'colher de sopa', 'colher de chá', 'pitada', 'dente', 'lata', 'a gosto'];
 
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
@@ -235,11 +234,6 @@ export function FormReceita() {
               <option key={s.id} value={s.nome} />
             ))}
           </datalist>
-          <datalist id="lista-unidades">
-            {UNIDADES.map((u) => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
           {form.itens.map((item, indice) => (
             <div key={item.chave} className="linha-item">
               <input
@@ -258,14 +252,19 @@ export function FormReceita() {
                 onChange={(e) => alterarItem(item.chave, 'quantidade', e.target.value)}
                 aria-label={`Quantidade do ingrediente ${indice + 1}`}
               />
-              <input
+              <select
                 className="item-unidade"
-                placeholder="Unidade"
-                list="lista-unidades"
                 value={item.unidade}
                 onChange={(e) => alterarItem(item.chave, 'unidade', e.target.value)}
                 aria-label={`Unidade do ingrediente ${indice + 1}`}
-              />
+              >
+                <option value="">Unidade…</option>
+                {UNIDADES_MEDIDA.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 className="botao-icone"

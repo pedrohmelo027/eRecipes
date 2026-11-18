@@ -1,0 +1,31 @@
+/** Unidades de medida aceitas nos ingredientes de uma receita. */
+export const UNIDADES_MEDIDA = [
+  'unidade',
+  'g',
+  'kg',
+  'mg',
+  'ml',
+  'litro',
+  'xícara',
+  'copo',
+  'colher de sopa',
+  'colher de chá',
+  'colher de café',
+  'pitada',
+  'gota',
+  'dente',
+  'fatia',
+  'pedaço',
+  'folha',
+  'ramo',
+  'maço',
+  'pé',
+  'lata',
+  'pacote',
+  'caixa',
+  'vidro',
+  'sachê',
+  'a gosto',
+] as const;
+
+export type UnidadeMedida = (typeof UNIDADES_MEDIDA)[number];
