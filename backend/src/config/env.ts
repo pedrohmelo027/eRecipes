@@ -32,7 +32,6 @@ export const env = {
     expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   },
 
-  // Pasta onde ficam as fotos enviadas pelos usuários
   uploadDir: path.resolve(
     process.env.UPLOAD_DIR ?? (ehTeste ? path.join(os.tmpdir(), 'erecipes-uploads-test') : 'uploads'),
   ),

@@ -7,7 +7,6 @@ import { Carregando } from './Carregando';
 import { GradeReceitas } from './CardReceita';
 import { FiltroCategorias } from './FiltroCategorias';
 
-/** Lista paginada das receitas cadastradas, com filtro por categoria. */
 export function ListaReceitas({ mostrarTotal = false }: { mostrarTotal?: boolean }) {
   const [categoria, setCategoria] = useState<number>();
   const [pagina, setPagina] = useState(1);

@@ -10,7 +10,6 @@ import {
 import { sequelize } from '../config/database';
 import type { Ingrediente } from './Ingrediente';
 
-/** Outro nome para um mesmo ingrediente (ex.: "aipim" e "macaxeira" para "mandioca"). */
 export class IngredienteSinonimo extends Model<
   InferAttributes<IngredienteSinonimo>,
   InferCreationAttributes<IngredienteSinonimo>

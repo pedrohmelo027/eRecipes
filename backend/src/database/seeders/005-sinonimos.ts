@@ -2,7 +2,6 @@ import type { MigrationFn } from 'umzug';
 import type { Sequelize } from 'sequelize';
 import { Ingrediente, sequelize } from '../../models';
 
-/** Nome principal → outros nomes usados no Brasil para o mesmo ingrediente. */
 export const SINONIMOS: Record<string, string[]> = {
   mandioca: ['aipim', 'macaxeira'],
   abóbora: ['jerimum'],
@@ -21,7 +20,6 @@ export const SINONIMOS: Record<string, string[]> = {
   'pimenta-do-reino': ['pimenta do reino'],
 };
 
-/** Nomes cadastrados com grafia errada → grafia correta. */
 const CORRECOES: Record<string, string> = { maça: 'maçã' };
 
 export const up: MigrationFn<Sequelize> = async () => {

@@ -18,7 +18,6 @@ export class ReceitaService {
     return usuario.tipoUsuario === TipoUsuario.ADMIN || receita.usuarioId === usuario.id;
   }
 
-
   static async listar({ pagina, limite, categoria }: Paginacao) {
     const { rows, count } = await Receita.findAndCountAll({
       where: categoria ? { categoriaId: categoria } : {},
@@ -90,7 +89,6 @@ export class ReceitaService {
     return ReceitaService.obter(id);
   }
 
-
   static async excluir(usuario: UsuarioAutenticado, id: number): Promise<void> {
     const receita = await Receita.findByPk(id);
     if (!receita) throw naoEncontrado('Receita não encontrada');
@@ -116,7 +114,6 @@ export class ReceitaService {
       throw new AppError(400, 'Categoria inválida', { categoriaId: 'Escolha uma categoria da lista' });
     }
   }
-
 
   private static async gravarItens(
     receitaId: number,

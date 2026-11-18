@@ -25,10 +25,6 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
 
   declare sinonimos?: NonAttribute<IngredienteSinonimo[]>;
 
-  /**
-   * Encontra o ingrediente pelo nome principal, por um sinônimo ou pela forma
-   * no singular/plural ("ovos" → "ovo"). Retorna null se não existir.
-   */
   static async resolver(nome: string, transaction?: Transaction): Promise<Ingrediente | null> {
     const normalizado = normalizarNomeIngrediente(nome);
     for (const candidato of [normalizado, ...formasSingulares(normalizado), ...formasPlurais(normalizado)]) {
@@ -52,11 +48,6 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     return ingrediente;
   }
 
-  /**
-   * Registra `sinonimo` como outro nome de `principal`. Se já existir um
-   * ingrediente cadastrado com o nome do sinônimo, ele é unificado no
-   * principal: as receitas passam a usar o principal e o duplicado é apagado.
-   */
   static async registrarSinonimo(sinonimo: string, principal: string, transaction?: Transaction): Promise<void> {
     const nomeSinonimo = normalizarNomeIngrediente(sinonimo);
     const alvo = await Ingrediente.obterOuCriar(principal, transaction);
@@ -65,7 +56,6 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     const duplicado = await Ingrediente.findOne({ where: { nome: nomeSinonimo }, transaction });
     if (duplicado && duplicado.id !== alvo.id) {
       const ids = { antigo: duplicado.id, novo: alvo.id };
-      // Receita que já tem os dois: fica só o principal
       await sequelize.query(
         `DELETE ir FROM item_receita ir
            JOIN item_receita outro ON outro.receita_id = ir.receita_id AND outro.ingrediente_id = :novo
@@ -88,7 +78,6 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     else await IngredienteSinonimo.create({ nome: nomeSinonimo, ingredienteId: alvo.id }, { transaction });
   }
 
-  /** Ingredientes usados em ao menos uma receita de autor ativo, com seus sinônimos. */
   static async disponiveis(): Promise<IngredienteDisponivel[]> {
     const linhas = await sequelize.query<{ id: number; nome: string }>(
       `SELECT DISTINCT i.id, i.nome FROM ingrediente i
@@ -111,7 +100,6 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     }));
   }
 
-  /** Autocompletar: procura pelo nome principal e pelos sinônimos. */
   static pesquisar(termo: string | undefined, limite = 20) {
     if (!termo) return Ingrediente.findAll({ order: [['nome', 'ASC']], limit: limite });
 

@@ -6,7 +6,6 @@ const padrao = '*.{ts,js}';
 const ignorar = ['**/*.d.ts'];
 
 function resolver<T>({ name, path: arquivo, context }: MigrationParams<T>): RunnableMigration<T> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const modulo = require(arquivo!);
   return {
     name: name.replace(/\.(ts|js)$/, ''),

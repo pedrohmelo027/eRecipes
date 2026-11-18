@@ -1,7 +1,6 @@
 import { DataTypes, QueryInterface } from 'sequelize';
 import type { MigrationFn } from 'umzug';
 
-/** Lista de unidades vigente quando esta migration foi criada (reduzida depois pela 008). */
 const UNIDADES_MEDIDA = [
   'unidade', 'g', 'kg', 'mg', 'ml', 'litro', 'xícara', 'copo', 'colher de sopa', 'colher de chá',
   'colher de café', 'pitada', 'gota', 'dente', 'fatia', 'pedaço', 'folha', 'ramo', 'maço', 'pé',
@@ -9,7 +8,6 @@ const UNIDADES_MEDIDA = [
 ];
 
 export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
-  // Valores fora da lista viram NULL para não quebrar a conversão
   await qi.sequelize.query('UPDATE item_receita SET unidade = NULL WHERE unidade NOT IN (:unidades)', {
     replacements: { unidades: [...UNIDADES_MEDIDA] },
   });

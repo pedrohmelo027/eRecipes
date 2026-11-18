@@ -2,11 +2,6 @@ import { DataTypes, QueryInterface } from 'sequelize';
 import type { MigrationFn } from 'umzug';
 import { UNIDADES } from '../../models/Unidade';
 
-/**
- * Reduz as unidades às 7 do diagrama de classes (xícara, unidade, kg, g,
- * litro, ml, copo). As unidades removidas são convertidas quando há
- * equivalência; as demais ficam sem unidade.
- */
 const CONVERSOES: { de: string[]; para: string | null; fator?: number; semQuantidade?: boolean }[] = [
   { de: ['colher de sopa'], para: 'ml', fator: 15 },
   { de: ['colher de chá'], para: 'ml', fator: 5 },

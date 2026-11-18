@@ -4,7 +4,6 @@ import { FotoService, TAMANHO_MAXIMO_FOTO } from '../services/FotoService';
 
 export const uploadRoutes = Router();
 
-// O corpo da requisição é o próprio arquivo da imagem (Content-Type: image/*)
 uploadRoutes.post(
   '/',
   autenticacao,

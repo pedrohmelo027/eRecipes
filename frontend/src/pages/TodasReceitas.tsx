@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ListaReceitas } from '../components/ListaReceitas';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 export function TodasReceitas() {
   const { usuario } = useAuth();

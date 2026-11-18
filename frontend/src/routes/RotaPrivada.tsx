@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Carregando } from '../components/Carregando';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 export function RotaPrivada({ apenasAdmin = false }: { apenasAdmin?: boolean }) {
   const { usuario, carregando, ehAdmin } = useAuth();

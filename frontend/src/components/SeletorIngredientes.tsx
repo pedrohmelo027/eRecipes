@@ -4,11 +4,9 @@ import type { Ingrediente, IngredienteDisponivel } from '../api/tipos';
 
 interface Props {
   selecionados: Ingrediente[];
-  /** Recebe uma função que calcula a nova seleção a partir da atual (seguro com cliques rápidos). */
   onChange: (alterar: (atuais: Ingrediente[]) => Ingrediente[]) => void;
 }
 
-/** Bolinhas clicáveis com os ingredientes que aparecem nas receitas cadastradas. */
 export function SeletorIngredientes({ selecionados, onChange }: Props) {
   const [disponiveis, setDisponiveis] = useState<IngredienteDisponivel[] | null>(null);
   const [falhou, setFalhou] = useState(false);

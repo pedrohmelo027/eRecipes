@@ -49,7 +49,6 @@ interface Opcoes {
   query?: Query;
 }
 
-/** Envia uma imagem do computador e devolve a URL onde ela ficou salva. */
 export async function enviarFoto(arquivo: File): Promise<string> {
   const headers: Record<string, string> = { 'Content-Type': arquivo.type || 'application/octet-stream' };
   if (token) headers.Authorization = `Bearer ${token}`;
