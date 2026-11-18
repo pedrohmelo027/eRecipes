@@ -9,6 +9,7 @@ import { Inicio } from '../pages/Inicio';
 import { Login } from '../pages/Login';
 import { MinhasReceitas } from '../pages/MinhasReceitas';
 import { NaoEncontrada } from '../pages/NaoEncontrada';
+import { TodasReceitas } from '../pages/TodasReceitas';
 import { RotaPrivada } from './RotaPrivada';
 
 export function AppRoutes() {
@@ -18,6 +19,7 @@ export function AppRoutes() {
         <Route index element={<Inicio />} />
         <Route path="login" element={<Login />} />
         <Route path="cadastro" element={<Cadastro />} />
+        <Route path="receitas" element={<TodasReceitas />} />
         <Route path="receitas/:id" element={<DetalheReceita />} />
 
         <Route element={<RotaPrivada />}>

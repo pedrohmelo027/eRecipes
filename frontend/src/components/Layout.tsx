@@ -18,6 +18,9 @@ export function Layout() {
             <span aria-hidden>🍳</span> eRecipes
           </Link>
           <nav className="menu">
+            <NavLink to="/receitas" end>
+              Todas as receitas
+            </NavLink>
             {usuario ? (
               <>
                 <NavLink to="/buscar">Buscar</NavLink>
