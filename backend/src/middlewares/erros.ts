@@ -38,6 +38,16 @@ export function tratarErros(erro: unknown, _req: Request, res: Response, _next: 
     return;
   }
 
+  if (typeof erro === 'object' && erro !== null && (erro as { type?: string }).type === 'entity.too.large') {
+    res.status(413).json({ erro: 'Arquivo muito grande', campos: { foto: 'A imagem deve ter no máximo 5 MB' } });
+    return;
+  }
+
+  if (typeof erro === 'object' && erro !== null && (erro as { status?: number }).status === 404) {
+    res.status(404).json({ erro: 'Arquivo não encontrado' });
+    return;
+  }
+
   console.error(erro);
   res.status(500).json({ erro: 'Erro interno do servidor' });
 }

@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { catalogoApi } from '../api/catalogoApi';
-import { ErroApi } from '../api/http';
+import { enviarFoto, ErroApi } from '../api/http';
 import { receitaApi } from '../api/receitaApi';
 import type { Ingrediente, ReceitaEntrada } from '../api/tipos';
 import { Aviso } from '../components/Aviso';
@@ -42,6 +42,9 @@ const vazio = (): Formulario => ({
 
 const UNIDADES = ['unidade', 'g', 'kg', 'ml', 'litro', 'xícara', 'colher de sopa', 'colher de chá', 'pitada', 'dente', 'lata', 'a gosto'];
 
+const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
+
 const numeroOuNulo = (valor: string) => (valor.trim() === '' ? null : Number(valor.replace(',', '.')));
 
 
@@ -58,6 +61,19 @@ export function FormReceita() {
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [sugestoes, setSugestoes] = useState<Ingrediente[]>([]);
+  const [arquivoFoto, setArquivoFoto] = useState<File | null>(null);
+  const [previaFoto, setPreviaFoto] = useState('');
+  const inputFoto = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!arquivoFoto) {
+      setPreviaFoto('');
+      return;
+    }
+    const url = URL.createObjectURL(arquivoFoto);
+    setPreviaFoto(url);
+    return () => URL.revokeObjectURL(url);
+  }, [arquivoFoto]);
 
   useEffect(() => {
     if (!editando) return;
@@ -98,6 +114,29 @@ export function FormReceita() {
     }
   }
 
+  function escolherFoto(e: ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!arquivo) return;
+    const outros = { ...campos };
+    delete outros.fotoUrl;
+    if (!TIPOS_FOTO.includes(arquivo.type)) {
+      setCampos({ ...outros, fotoUrl: 'Use uma imagem JPG, PNG, WEBP ou GIF' });
+      return;
+    }
+    if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
+      setCampos({ ...outros, fotoUrl: 'A imagem deve ter no máximo 5 MB' });
+      return;
+    }
+    setCampos(outros);
+    setArquivoFoto(arquivo);
+  }
+
+  function removerFoto() {
+    setArquivoFoto(null);
+    alterar('fotoUrl', '');
+  }
+
   function removerItem(chave: number) {
     setForm((f) => ({ ...f, itens: f.itens.filter((i) => i.chave !== chave) }));
   }
@@ -107,19 +146,37 @@ export function FormReceita() {
     setErro('');
     setCampos({});
 
+    setSalvando(true);
+    let fotoUrl = form.fotoUrl.trim() || null;
+    if (arquivoFoto) {
+      try {
+        fotoUrl = await enviarFoto(arquivoFoto);
+        setArquivoFoto(null);
+        alterar('fotoUrl', fotoUrl);
+      } catch (err) {
+        setSalvando(false);
+        if (err instanceof ErroApi) {
+          setErro(err.message);
+          setCampos(err.campos);
+        } else {
+          setErro('Não foi possível enviar a foto');
+        }
+        return;
+      }
+    }
+
     const dados: ReceitaEntrada = {
       titulo: form.titulo,
       categoriaId: form.categoriaId ? Number(form.categoriaId) : '',
       modoPreparo: form.modoPreparo,
       tempoPreparo: numeroOuNulo(form.tempoPreparo),
       rendimento: numeroOuNulo(form.rendimento),
-      fotoUrl: form.fotoUrl.trim() || null,
+      fotoUrl,
       itens: form.itens
         .filter((i) => i.nome.trim())
         .map((i) => ({ nome: i.nome, quantidade: numeroOuNulo(i.quantidade), unidade: i.unidade || null })),
     };
 
-    setSalvando(true);
     try {
       const salva = editando ? await receitaApi.atualizar(Number(id), dados) : await receitaApi.criar(dados);
       navigate(`/receitas/${salva.id}`, { replace: true });
@@ -230,9 +287,35 @@ export function FormReceita() {
           <textarea rows={8} value={form.modoPreparo} onChange={(e) => alterar('modoPreparo', e.target.value)} />
         </Campo>
 
-        <Campo rotulo="URL da foto (opcional)" erro={campos.fotoUrl}>
-          <input type="url" placeholder="https://…" value={form.fotoUrl} onChange={(e) => alterar('fotoUrl', e.target.value)} />
-        </Campo>
+        <div className="campo-foto">
+          <span className="rotulo-campo">Foto (opcional)</span>
+          {(previaFoto || form.fotoUrl) && (
+            <img src={previaFoto || form.fotoUrl} alt="Pré-visualização da foto da receita" className="previa-foto" />
+          )}
+          <input
+            ref={inputFoto}
+            type="file"
+            accept={TIPOS_FOTO.join(',')}
+            onChange={escolherFoto}
+            hidden
+            aria-label="Escolher foto da receita"
+          />
+          <div className="acoes-foto">
+            <button type="button" className="botao botao-fantasma" onClick={() => inputFoto.current?.click()}>
+              {previaFoto || form.fotoUrl ? 'Trocar foto' : 'Escolher foto do computador'}
+            </button>
+            {(previaFoto || form.fotoUrl) && (
+              <button type="button" className="botao botao-perigo" onClick={removerFoto}>
+                Remover foto
+              </button>
+            )}
+          </div>
+          {campos.fotoUrl ? (
+            <span className="erro-campo">{campos.fotoUrl}</span>
+          ) : (
+            <span className="dica-campo">JPG, PNG, WEBP ou GIF de até 5 MB.</span>
+          )}
+        </div>
 
         <div className="acoes">
           <button className="botao botao-primario" disabled={salvando}>

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TipoUsuario } from '../models/Usuario';
+import { FOTO_URL_REGEX } from '../services/FotoService';
 
 const texto = (campo: string, max: number) =>
   z
@@ -70,8 +71,7 @@ export const receitaSchema = z.object({
   fotoUrl: z
     .string()
     .trim()
-    .url('Informe uma URL válida para a foto')
-    .max(255)
+    .regex(FOTO_URL_REGEX, 'Envie uma foto do seu computador')
     .nullish()
     .or(z.literal('').transform(() => null)),
   itens: z
