@@ -3,24 +3,24 @@ import {
   DataTypes,
   ForeignKey,
   Includeable,
+  IncludeOptions,
   InferAttributes,
   InferCreationAttributes,
   Model,
   NonAttribute,
-  QueryTypes,
 } from 'sequelize';
 import { sequelize } from '../config/database';
 import { AppError } from '../utils/AppError';
 import type { Categoria } from './Categoria';
 import type { ItemReceita } from './ItemReceita';
-import type { UnidadeMedida } from './UnidadeMedida';
+import type { Unidade } from './Unidade';
 import type { Usuario } from './Usuario';
 
 export interface DadosItemReceita {
   ingredienteId?: number;
   nome?: string;
   quantidade?: number | null;
-  unidade?: UnidadeMedida | null;
+  unidade?: Unidade | null;
 }
 
 export interface DadosReceita {
@@ -65,48 +65,51 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
   }
 
   /**
-   * Busca por ingredientes (RN06): retorna as receitas que usam ao menos um dos
-   * ingredientes informados, com a lista do que falta. As que dá para fazer só
-   * com o que o ator tem (nada faltando) vêm primeiro.
+   * getIngredientesByReceitas (diagrama de classes, RN06): retorna as receitas
+   * que usam ao menos um dos ingredientes informados, filtrando pela categoria
+   * quando ela é informada. Cada receita vem com `ingredientesFaltando`, e as
+   * que dá para fazer só com o que o ator tem (nada faltando) vêm primeiro.
+   * Receitas de autores inativos não aparecem (RN09).
    */
-  static async buscarPorIngredientes(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
+  static async getIngredientesByReceitas(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
     if (!ingredientes.length) {
       throw new AppError(400, 'Informe ao menos um ingrediente', { ingredientes: 'Obrigatório' });
     }
 
-    const linhas = await sequelize.query<{ id: number }>(
-      `SELECT r.id FROM receita r
-         JOIN usuario u ON u.id = r.usuario_id AND u.ativo = TRUE
-         JOIN item_receita ir ON ir.receita_id = r.id
-        WHERE (:categoria IS NULL OR r.categoria_id = :categoria)
-        GROUP BY r.id
-       HAVING SUM(ir.ingrediente_id IN (:ingredientes)) > 0`,
-      {
-        replacements: { ingredientes, categoria: categoria ?? null },
-        type: QueryTypes.SELECT,
-      },
-    );
-    if (!linhas.length) return [];
+    const itens = sequelize.models.ItemReceita as typeof ItemReceita;
+    const usadas = await itens.findAll({
+      attributes: ['receitaId'],
+      where: { ingredienteId: ingredientes },
+      group: ['receitaId'],
+    });
+    if (!usadas.length) return [];
 
     const receitas = await Receita.findAll({
-      where: { id: linhas.map((l) => l.id) },
-      include: Receita.includeCompleto,
+      where: {
+        id: usadas.map((item) => item.receitaId),
+        ...(categoria ? { categoriaId: categoria } : {}),
+      },
+      include: Receita.includeCompleto.map((inc) =>
+        (inc as IncludeOptions).as === 'autor' ? { ...(inc as IncludeOptions), where: { ativo: true } } : inc,
+      ),
     });
 
-    const tenho = new Set(ingredientes);
+    const disponiveis = new Set(ingredientes);
     return receitas
-      .map((receita) => ({
-        ...receita.toJSON(),
-        ingredientesFaltando: (receita.itens ?? [])
-          .filter((item) => !tenho.has(item.ingrediente!.id))
-          .map((item) => item.ingrediente!.nome)
-          .sort((x, y) => x.localeCompare(y, 'pt-BR')),
-      }))
+      .map((receita) => ({ ...receita.toJSON(), ingredientesFaltando: Receita.faltando(receita, disponiveis) }))
       .sort(
         (a, b) =>
           a.ingredientesFaltando.length - b.ingredientesFaltando.length ||
           a.titulo.localeCompare(b.titulo, 'pt-BR'),
       );
+  }
+
+  /** Nomes dos ingredientes da receita que não estão entre os disponíveis, em ordem alfabética. */
+  private static faltando(receita: Receita, disponiveis: Set<number>): string[] {
+    return (receita.itens ?? [])
+      .filter((item) => !disponiveis.has(item.ingrediente!.id))
+      .map((item) => item.ingrediente!.nome)
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }
 }
 

@@ -14,35 +14,8 @@ export interface Categoria {
   nome: string;
 }
 
-/** Mesma lista do backend (backend/src/models/UnidadeMedida.ts). */
-export const UNIDADES_MEDIDA = [
-  'unidade',
-  'g',
-  'kg',
-  'mg',
-  'ml',
-  'litro',
-  'xícara',
-  'copo',
-  'colher de sopa',
-  'colher de chá',
-  'colher de café',
-  'pitada',
-  'gota',
-  'dente',
-  'fatia',
-  'pedaço',
-  'folha',
-  'ramo',
-  'maço',
-  'pé',
-  'lata',
-  'pacote',
-  'caixa',
-  'vidro',
-  'sachê',
-  'a gosto',
-] as const;
+/** Enum Unidade do diagrama de classes; mesmos valores de backend/src/models/Unidade.ts. */
+export const UNIDADES_MEDIDA = ['xícara', 'unidade', 'kg', 'g', 'litro', 'ml', 'copo'] as const;
 
 export type UnidadeMedida = (typeof UNIDADES_MEDIDA)[number];
 

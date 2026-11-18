@@ -2,7 +2,7 @@ import type { MigrationFn } from 'umzug';
 import type { Sequelize } from 'sequelize';
 import { env } from '../../config/env';
 import { Categoria, Ingrediente, ItemReceita, Receita, Usuario } from '../../models';
-import type { UnidadeMedida } from '../../models/UnidadeMedida';
+import { Unidade } from '../../models/Unidade';
 
 interface ReceitaExemplo {
   titulo: string;
@@ -10,7 +10,7 @@ interface ReceitaExemplo {
   modoPreparo: string;
   tempoPreparo: number;
   rendimento: number;
-  itens: [nome: string, quantidade: number | null, unidade: UnidadeMedida | null][];
+  itens: [nome: string, quantidade: number | null, unidade: Unidade | null][];
 }
 
 const EXEMPLOS: ReceitaExemplo[] = [
@@ -21,7 +21,7 @@ const EXEMPLOS: ReceitaExemplo[] = [
     rendimento: 1,
     modoPreparo:
       'Bata os ovos com uma pitada de sal. Aqueça a manteiga em uma frigideira, despeje os ovos e cozinhe em fogo baixo até firmar. Dobre ao meio e sirva.',
-    itens: [['ovo', 3, 'unidade'], ['sal', null, 'a gosto'], ['manteiga', 1, 'colher de sopa']],
+    itens: [['ovo', 3, Unidade.UNIDADE], ['sal', null, null], ['manteiga', 15, Unidade.G]],
   },
   {
     titulo: 'Bolo de chocolate',
@@ -31,9 +31,9 @@ const EXEMPLOS: ReceitaExemplo[] = [
     modoPreparo:
       'Bata os ovos, o açúcar e o óleo. Acrescente o leite, a farinha e o chocolate em pó. Por último, misture o fermento. Asse em forma untada a 180 °C por cerca de 40 minutos.',
     itens: [
-      ['ovo', 3, 'unidade'], ['açúcar', 2, 'xícara'], ['óleo', 0.5, 'xícara'],
-      ['leite', 1, 'xícara'], ['farinha de trigo', 2, 'xícara'],
-      ['chocolate em pó', 1, 'xícara'], ['fermento em pó', 1, 'colher de sopa'],
+      ['ovo', 3, Unidade.UNIDADE], ['açúcar', 2, Unidade.XICARA], ['óleo', 0.5, Unidade.XICARA],
+      ['leite', 1, Unidade.XICARA], ['farinha de trigo', 2, Unidade.XICARA],
+      ['chocolate em pó', 1, Unidade.XICARA], ['fermento em pó', 15, Unidade.G],
     ],
   },
   {
@@ -44,8 +44,8 @@ const EXEMPLOS: ReceitaExemplo[] = [
     modoPreparo:
       'Refogue o alho e a cebola no óleo. Junte o arroz e frite por 2 minutos. Adicione água fervente e sal, tampe e cozinhe em fogo baixo até secar.',
     itens: [
-      ['arroz', 2, 'xícara'], ['água', 4, 'xícara'], ['alho', 2, 'dente'],
-      ['cebola', 0.5, 'unidade'], ['óleo', 2, 'colher de sopa'], ['sal', 1, 'colher de chá'],
+      ['arroz', 2, Unidade.XICARA], ['água', 4, Unidade.XICARA], ['alho', 2, Unidade.UNIDADE],
+      ['cebola', 0.5, Unidade.UNIDADE], ['óleo', 30, Unidade.ML], ['sal', 5, Unidade.G],
     ],
   },
   {
@@ -56,8 +56,8 @@ const EXEMPLOS: ReceitaExemplo[] = [
     modoPreparo:
       'Cozinhe o macarrão em água com sal. Refogue o alho no azeite, adicione o molho de tomate e deixe apurar. Misture ao macarrão escorrido.',
     itens: [
-      ['macarrão', 500, 'g'], ['molho de tomate', 1, 'lata'], ['alho', 2, 'dente'],
-      ['azeite', 2, 'colher de sopa'], ['sal', null, 'a gosto'], ['água', 3, 'litro'],
+      ['macarrão', 500, Unidade.G], ['molho de tomate', 340, Unidade.G], ['alho', 2, Unidade.UNIDADE],
+      ['azeite', 30, Unidade.ML], ['sal', null, null], ['água', 3, Unidade.L],
     ],
   },
   {
@@ -67,8 +67,8 @@ const EXEMPLOS: ReceitaExemplo[] = [
     rendimento: 2,
     modoPreparo: 'Lave e corte a alface e o tomate. Tempere com azeite, limão e sal.',
     itens: [
-      ['alface', 1, 'pé'], ['tomate', 2, 'unidade'], ['azeite', 1, 'colher de sopa'],
-      ['limão', 0.5, 'unidade'], ['sal', null, 'a gosto'],
+      ['alface', 1, Unidade.UNIDADE], ['tomate', 2, Unidade.UNIDADE], ['azeite', 15, Unidade.ML],
+      ['limão', 0.5, Unidade.UNIDADE], ['sal', null, null],
     ],
   },
   {
@@ -77,7 +77,7 @@ const EXEMPLOS: ReceitaExemplo[] = [
     tempoPreparo: 5,
     rendimento: 2,
     modoPreparo: 'Bata no liquidificador a banana, o leite e o açúcar até ficar homogêneo.',
-    itens: [['banana', 2, 'unidade'], ['leite', 2, 'xícara'], ['açúcar', 1, 'colher de sopa']],
+    itens: [['banana', 2, Unidade.UNIDADE], ['leite', 2, Unidade.XICARA], ['açúcar', 15, Unidade.G]],
   },
 ];
 

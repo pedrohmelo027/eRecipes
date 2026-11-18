@@ -1,6 +1,12 @@
 import { DataTypes, QueryInterface } from 'sequelize';
 import type { MigrationFn } from 'umzug';
-import { UNIDADES_MEDIDA } from '../../models/UnidadeMedida';
+
+/** Lista de unidades vigente quando esta migration foi criada (reduzida depois pela 008). */
+const UNIDADES_MEDIDA = [
+  'unidade', 'g', 'kg', 'mg', 'ml', 'litro', 'xícara', 'copo', 'colher de sopa', 'colher de chá',
+  'colher de café', 'pitada', 'gota', 'dente', 'fatia', 'pedaço', 'folha', 'ramo', 'maço', 'pé',
+  'lata', 'pacote', 'caixa', 'vidro', 'sachê', 'a gosto',
+];
 
 export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
   // Valores fora da lista viram NULL para não quebrar a conversão

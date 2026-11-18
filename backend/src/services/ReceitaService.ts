@@ -36,7 +36,7 @@ export class ReceitaService {
 
   
   static buscar(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
-    return Receita.buscarPorIngredientes(ingredientes, categoria);
+    return Receita.getIngredientesByReceitas(ingredientes, categoria);
   }
 
  
