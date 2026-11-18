@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UNIDADES_MEDIDA } from '../models/UnidadeMedida';
+import { Unidade } from '../models/Unidade';
 import { TipoUsuario } from '../models/Usuario';
 import { converterQuantidade } from '../utils/quantidade';
 import { FOTO_URL_REGEX } from '../services/FotoService';
@@ -66,7 +66,7 @@ const itemSchema = z
         .nullish(),
     ),
     unidade: z
-      .enum(UNIDADES_MEDIDA, { errorMap: () => ({ message: 'Escolha uma unidade da lista' }) })
+      .nativeEnum(Unidade, { errorMap: () => ({ message: 'Escolha uma unidade da lista' }) })
       .nullish()
       .or(z.literal('').transform(() => null)),
   })

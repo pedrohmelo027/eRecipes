@@ -5,6 +5,7 @@ import { migrator } from '../src/database/migrator';
 import { CATEGORIAS } from '../src/database/seeders/001-categorias';
 import { Categoria, Ingrediente, ItemReceita, Receita, sequelize, TipoUsuario, Usuario } from '../src/models';
 import { AuthService } from '../src/services/AuthService';
+import { Unidade } from '../src/models/Unidade';
 
 export async function resetarBanco() {
   const conexao = await mysql.createConnection({
@@ -65,7 +66,7 @@ export async function criarReceita(
     categoriaId: categoria!.id,
   });
   await ItemReceita.bulkCreate(
-    ingredientes.map((i) => ({ receitaId: receita.id, ingredienteId: i.id, quantidade: 1, unidade: 'unidade' })),
+    ingredientes.map((i) => ({ receitaId: receita.id, ingredienteId: i.id, quantidade: 1, unidade: Unidade.UNIDADE })),
   );
   return receita;
 }

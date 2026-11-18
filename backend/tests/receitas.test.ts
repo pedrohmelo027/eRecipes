@@ -137,6 +137,21 @@ describe('UC03 FA05 — minhas receitas', () => {
 });
 
 describe('unidade de medida', () => {
+  it('aceita só as 7 unidades do diagrama', async () => {
+    for (const unidade of ['colher de sopa', 'a gosto', 'dente']) {
+      const dados = novaReceita();
+      dados.itens[0].unidade = unidade;
+      const res = await request(app).post('/api/receitas').set('Authorization', autor.auth).send(dados);
+      expect(res.status).toBe(400);
+    }
+    const dados = novaReceita();
+    dados.itens[0].unidade = 'copo';
+    dados.itens[1].unidade = 'litro';
+    dados.itens[2].unidade = 'kg';
+    const res = await request(app).post('/api/receitas').set('Authorization', autor.auth).send(dados);
+    expect(res.status).toBe(201);
+  });
+
   it('recusa unidade fora da lista', async () => {
     const dados = novaReceita();
     dados.itens[0].unidade = 'balde';

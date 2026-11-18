@@ -66,8 +66,8 @@ describe('quantidade fracionada na receita', () => {
     expect(res.body.campos['itens.0.quantidade']).toMatch(/Quantidade inválida/);
   });
 
-  it('aceita quantidade vazia (ex.: sal a gosto)', async () => {
-    const res = await cadastrar([{ nome: 'sal', quantidade: '', unidade: 'a gosto' }]);
+  it('aceita quantidade e unidade vazias (ex.: sal a gosto)', async () => {
+    const res = await cadastrar([{ nome: 'sal', quantidade: '', unidade: '' }]);
     expect(res.status).toBe(201);
     expect(res.body.itens[0].quantidade).toBeNull();
   });
