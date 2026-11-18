@@ -24,23 +24,40 @@ afterAll(fecharBanco);
 const buscar = (query: string) => request(app).get(`/api/receitas/busca?${query}`).set('Authorization', auth);
 const titulos = (body: { titulo: string }[]) => body.map((r) => r.titulo).sort();
 
-describe('RN06 — busca exata por ingredientes', () => {
-  it('retorna receita quando todos os ingredientes estão na lista', async () => {
-    const res = await buscar(`ingredientes=${ids.ovo},${ids.sal}`);
+type Resultado = { titulo: string; ingredientesFaltando: string[] };
+const faltando = (body: Resultado[], titulo: string) => body.find((r) => r.titulo === titulo)?.ingredientesFaltando;
+
+describe('RN06 — busca por ingredientes', () => {
+  it('encontra receitas que usam o ingrediente, mesmo faltando outros', async () => {
+    const res = await buscar(`ingredientes=${ids.ovo}`);
     expect(res.status).toBe(200);
-    expect(titulos(res.body)).toEqual(['Ovo cozido']);
+    expect(titulos(res.body)).toEqual(['Bolo', 'Ovo cozido']);
+    expect(faltando(res.body, 'Ovo cozido')).toEqual(['sal']);
+    expect(faltando(res.body, 'Bolo')).toEqual(['açúcar', 'farinha de trigo', 'leite']);
   });
 
-  it('não retorna receita com 1 ingrediente faltando', async () => {
+  it('marca como completa a receita com todos os ingredientes na lista', async () => {
+    const res = await buscar(`ingredientes=${ids.ovo},${ids.sal}`);
+    expect(res.body[0].titulo).toBe('Ovo cozido');
+    expect(res.body[0].ingredientesFaltando).toEqual([]);
+  });
+
+  it('ordena pelas receitas com menos ingredientes faltando', async () => {
     const res = await buscar(`ingredientes=${ids.ovo},${ids.leite},${ids.farinha}`);
-    expect(res.status).toBe(200);
-    expect(titulos(res.body)).toEqual([]);
+    expect(res.body.map((r: Resultado) => r.titulo)).toEqual(['Bolo', 'Ovo cozido']);
+    expect(faltando(res.body, 'Bolo')).toEqual(['açúcar']);
   });
 
   it('aceita ingredientes a mais na lista do usuário', async () => {
     const todos = Object.values(ids).join(',');
     const res = await buscar(`ingredientes=${todos}`);
     expect(titulos(res.body)).toEqual(['Bolo', 'Ovo cozido']);
+    expect(res.body.every((r: Resultado) => r.ingredientesFaltando.length === 0)).toBe(true);
+  });
+
+  it('não retorna receitas sem nenhum dos ingredientes informados', async () => {
+    const res = await buscar(`ingredientes=${ids.acucar}`);
+    expect(titulos(res.body)).toEqual(['Bolo']);
   });
 
   it('traz categoria, autor e itens no resultado', async () => {
@@ -70,6 +87,15 @@ describe('RN09 — autores inativos', () => {
     const res = await request(app).get('/api/receitas');
     expect(res.status).toBe(200);
     expect(titulos(res.body.dados)).toEqual(['Bolo', 'Ovo cozido']);
+  });
+});
+
+describe('ingredientes disponíveis para a busca', () => {
+  it('lista só ingredientes usados em receitas de autores ativos, em ordem alfabética', async () => {
+    await criarIngredientes('ingrediente sem receita');
+    const res = await request(app).get('/api/ingredientes/disponiveis');
+    expect(res.status).toBe(200);
+    expect(res.body.map((i: { nome: string }) => i.nome)).toEqual(['açúcar', 'farinha de trigo', 'leite', 'ovo', 'sal']);
   });
 });
 

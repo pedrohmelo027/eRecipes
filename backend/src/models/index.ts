@@ -1,6 +1,7 @@
 import { sequelize } from '../config/database';
 import { Categoria } from './Categoria';
 import { Ingrediente } from './Ingrediente';
+import { IngredienteSinonimo } from './IngredienteSinonimo';
 import { ItemReceita } from './ItemReceita';
 import { Receita } from './Receita';
 import { TipoUsuario, Usuario } from './Usuario';
@@ -17,6 +18,9 @@ ItemReceita.belongsTo(Receita, { foreignKey: 'receitaId', as: 'receita' });
 Ingrediente.hasMany(ItemReceita, { foreignKey: 'ingredienteId', as: 'itens', onDelete: 'RESTRICT' });
 ItemReceita.belongsTo(Ingrediente, { foreignKey: 'ingredienteId', as: 'ingrediente' });
 
+Ingrediente.hasMany(IngredienteSinonimo, { foreignKey: 'ingredienteId', as: 'sinonimos', onDelete: 'CASCADE' });
+IngredienteSinonimo.belongsTo(Ingrediente, { foreignKey: 'ingredienteId', as: 'ingrediente' });
+
 Receita.includeCompleto = [
   { model: Categoria, as: 'categoria' },
   { model: Usuario, as: 'autor', attributes: ['id', 'nome'] },
@@ -28,4 +32,4 @@ Receita.includeCompleto = [
   },
 ];
 
-export { sequelize, Categoria, Ingrediente, ItemReceita, Receita, TipoUsuario, Usuario };
+export { sequelize, Categoria, Ingrediente, IngredienteSinonimo, ItemReceita, Receita, TipoUsuario, Usuario };

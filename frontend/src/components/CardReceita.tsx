@@ -12,7 +12,7 @@ export function FotoReceita({ receita, className }: { receita: Receita; classNam
   );
 }
 
-export function CardReceita({ receita }: { receita: Receita }) {
+export function CardReceita({ receita, faltando }: { receita: Receita; faltando?: string[] }) {
   return (
     <Link to={`/receitas/${receita.id}`} className="card-receita">
       <FotoReceita receita={receita} className="card-foto" />
@@ -23,6 +23,11 @@ export function CardReceita({ receita }: { receita: Receita }) {
           {receita.tempoPreparo ? `${receita.tempoPreparo} min` : 'Tempo livre'}
           {receita.rendimento ? ` · ${receita.rendimento} ${receita.rendimento === 1 ? 'porção' : 'porções'}` : ''}
         </p>
+        {faltando && faltando.length > 0 && (
+          <p className="card-faltando">
+            Falta{faltando.length > 1 ? 'm' : ''}: {faltando.join(', ')}
+          </p>
+        )}
       </div>
     </Link>
   );

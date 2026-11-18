@@ -7,6 +7,10 @@ export class CatalogoController {
     res.json(await CatalogoService.listarCategorias());
   }
 
+  static async ingredientesDisponiveis(_req: Request, res: Response) {
+    res.json(await CatalogoService.ingredientesDisponiveis());
+  }
+
   static async ingredientes(req: Request, res: Response) {
     const { q } = pesquisaSchema.parse(req.query);
     res.json(await CatalogoService.pesquisarIngredientes(q));
