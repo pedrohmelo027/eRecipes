@@ -14,6 +14,38 @@ export interface Categoria {
   nome: string;
 }
 
+/** Mesma lista do backend (backend/src/models/UnidadeMedida.ts). */
+export const UNIDADES_MEDIDA = [
+  'unidade',
+  'g',
+  'kg',
+  'mg',
+  'ml',
+  'litro',
+  'xícara',
+  'copo',
+  'colher de sopa',
+  'colher de chá',
+  'colher de café',
+  'pitada',
+  'gota',
+  'dente',
+  'fatia',
+  'pedaço',
+  'folha',
+  'ramo',
+  'maço',
+  'pé',
+  'lata',
+  'pacote',
+  'caixa',
+  'vidro',
+  'sachê',
+  'a gosto',
+] as const;
+
+export type UnidadeMedida = (typeof UNIDADES_MEDIDA)[number];
+
 export interface Ingrediente {
   id: number;
   nome: string;
@@ -21,7 +53,7 @@ export interface Ingrediente {
 
 export interface ItemReceita {
   quantidade: number | null;
-  unidade: string | null;
+  unidade: UnidadeMedida | null;
   ingrediente: Ingrediente;
 }
 
@@ -52,7 +84,7 @@ export interface ItemReceitaEntrada {
   ingredienteId?: number;
   nome?: string;
   quantidade?: number | null;
-  unidade?: string | null;
+  unidade?: UnidadeMedida | null;
 }
 
 export interface ReceitaEntrada {

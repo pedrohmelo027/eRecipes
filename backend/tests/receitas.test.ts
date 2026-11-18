@@ -135,3 +135,33 @@ describe('UC03 FA05 — minhas receitas', () => {
     expect(res.body.map((r: { titulo: string }) => r.titulo)).toEqual(['Do outro']);
   });
 });
+
+describe('unidade de medida', () => {
+  it('recusa unidade fora da lista', async () => {
+    const dados = novaReceita();
+    dados.itens[0].unidade = 'balde';
+    const res = await request(app).post('/api/receitas').set('Authorization', autor.auth).send(dados);
+    expect(res.status).toBe(400);
+    expect(res.body.campos['itens.0.unidade']).toBe('Escolha uma unidade da lista');
+  });
+
+  it('aceita item sem unidade', async () => {
+    const dados = novaReceita();
+    dados.itens[0].unidade = '';
+    const res = await request(app).post('/api/receitas').set('Authorization', autor.auth).send(dados);
+    expect(res.status).toBe(201);
+  });
+
+  it('o banco só aceita unidades da lista', async () => {
+    const receita = await request(app).post('/api/receitas').set('Authorization', autor.auth).send(novaReceita());
+    const ingrediente = await Ingrediente.obterOuCriar('fermento');
+    await expect(
+      ItemReceita.create({
+        receitaId: receita.body.id,
+        ingredienteId: ingrediente.id,
+        quantidade: 1,
+        unidade: 'balde' as never,
+      }),
+    ).rejects.toThrow();
+  });
+});

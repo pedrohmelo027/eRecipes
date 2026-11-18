@@ -13,13 +13,14 @@ import { sequelize } from '../config/database';
 import { AppError } from '../utils/AppError';
 import type { Categoria } from './Categoria';
 import type { ItemReceita } from './ItemReceita';
+import type { UnidadeMedida } from './UnidadeMedida';
 import type { Usuario } from './Usuario';
 
 export interface DadosItemReceita {
   ingredienteId?: number;
   nome?: string;
   quantidade?: number | null;
-  unidade?: string | null;
+  unidade?: UnidadeMedida | null;
 }
 
 export interface DadosReceita {
