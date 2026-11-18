@@ -393,6 +393,10 @@ textarea { resize: vertical; }
 .campo-com-erro select,
 .campo-com-erro textarea { border-color: var(--perigo); }
 .erro-campo { color: var(--perigo); font-size: 0.9rem; font-weight: 600; }
+.campo-foto { display: flex; flex-direction: column; gap: 0.5rem; }
+.campo-foto .rotulo-campo { font-weight: 600; }
+.previa-foto { width: 100%; max-width: 360px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; border: 1px solid var(--borda); }
+.acoes-foto { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .dica-campo { color: var(--texto-suave); font-size: 0.9rem; font-weight: 400; }
 .rodape-form { text-align: center; color: var(--texto-suave); margin: 1.25rem 0 0; }
 .linha-campos { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; }

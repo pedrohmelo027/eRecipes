@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import os from 'node:os';
+import path from 'node:path';
 
 function obrigatoria(nome: string, padrao?: string): string {
   const valor = process.env[nome] ?? padrao;
@@ -29,6 +31,11 @@ export const env = {
     secret: obrigatoria('JWT_SECRET'),
     expiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
   },
+
+  // Pasta onde ficam as fotos enviadas pelos usuários
+  uploadDir: path.resolve(
+    process.env.UPLOAD_DIR ?? (ehTeste ? path.join(os.tmpdir(), 'erecipes-uploads-test') : 'uploads'),
+  ),
 
   admin: {
     nome: process.env.ADMIN_NOME ?? 'Administrador',

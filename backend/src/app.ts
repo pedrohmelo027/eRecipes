@@ -12,6 +12,7 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/api/saude', (_req, res) => {
   res.json({ status: 'ok' });
 });
+app.use('/api/uploads', express.static(env.uploadDir, { fallthrough: false, index: false, dotfiles: 'deny' }));
 app.use('/api', rotas);
 
 app.use(rotaNaoEncontrada);

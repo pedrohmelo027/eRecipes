@@ -49,6 +49,27 @@ interface Opcoes {
   query?: Query;
 }
 
+/** Envia uma imagem do computador e devolve a URL onde ela ficou salva. */
+export async function enviarFoto(arquivo: File): Promise<string> {
+  const headers: Record<string, string> = { 'Content-Type': arquivo.type || 'application/octet-stream' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${BASE_URL}/fotos`, { method: 'POST', headers, body: arquivo });
+  } catch {
+    throw new ErroApi(0, 'Não foi possível conectar ao servidor. Verifique se a API está rodando.');
+  }
+  const dados = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) {
+    if (resposta.status === 401 && token) aoExpirarSessao?.();
+    throw new ErroApi(resposta.status, dados.erro ?? 'Erro ao enviar a foto', {
+      fotoUrl: dados.campos?.foto ?? dados.erro ?? 'Erro ao enviar a foto',
+    });
+  }
+  return dados.url as string;
+}
+
 export async function http<T>(caminho: string, { method = 'GET', body, query }: Opcoes = {}): Promise<T> {
   const params = new URLSearchParams();
   for (const [chave, valor] of Object.entries(query ?? {})) {

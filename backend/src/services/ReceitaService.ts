@@ -3,6 +3,7 @@ import { Categoria, Ingrediente, ItemReceita, Receita, sequelize, TipoUsuario, U
 import type { UsuarioAutenticado } from '../middlewares/autenticacao';
 import { AppError, naoEncontrado, proibido } from '../utils/AppError';
 import type { DadosReceitaEntrada } from '../validators/schemas';
+import { FotoService } from './FotoService';
 
 interface Paginacao {
   pagina: number;
@@ -78,11 +79,13 @@ export class ReceitaService {
     Receita.validar(dados);
     await ReceitaService.garantirCategoria(dados.categoriaId);
 
+    const fotoAnterior = receita.fotoUrl;
     await sequelize.transaction(async (transaction) => {
       await receita.update(ReceitaService.camposReceita(dados), { transaction });
       await ItemReceita.destroy({ where: { receitaId: id }, transaction });
       await ReceitaService.gravarItens(id, dados.itens, transaction);
     });
+    if (fotoAnterior !== receita.fotoUrl) await FotoService.remover(fotoAnterior);
     return ReceitaService.obter(id);
   }
 
@@ -92,6 +95,7 @@ export class ReceitaService {
     if (!receita) throw naoEncontrado('Receita não encontrada');
     if (!ReceitaService.podeAlterar(usuario, receita)) throw proibido('Você só pode excluir as suas receitas');
     await receita.destroy();
+    await FotoService.remover(receita.fotoUrl);
   }
 
   private static camposReceita(dados: DadosReceitaEntrada) {
