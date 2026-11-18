@@ -7,9 +7,10 @@ import { Aviso } from '../components/Aviso';
 import { Carregando } from '../components/Carregando';
 import { FotoReceita } from '../components/CardReceita';
 import { useAuth } from '../contexts/AuthContext';
+import { formatarQuantidade } from '../utils/quantidade';
 
 function formatarItem({ quantidade, unidade }: ItemReceita) {
-  const qtd = quantidade !== null ? quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '';
+  const qtd = quantidade !== null ? formatarQuantidade(quantidade) : '';
   return [qtd, unidade].filter(Boolean).join(' ');
 }
 

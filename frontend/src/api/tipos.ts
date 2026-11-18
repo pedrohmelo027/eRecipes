@@ -93,7 +93,8 @@ export interface ResultadoBusca extends Receita {
 export interface ItemReceitaEntrada {
   ingredienteId?: number;
   nome?: string;
-  quantidade?: number | null;
+  /** Número ou texto como digitado: "2", "1/2", "1 1/2", "0,5", "meia". */
+  quantidade?: number | string | null;
   unidade?: UnidadeMedida | null;
 }
 

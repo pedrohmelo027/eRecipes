@@ -9,6 +9,7 @@ import { Campo } from '../components/Campo';
 import { Carregando } from '../components/Carregando';
 import { useCategorias } from '../components/FiltroCategorias';
 import { useAuth } from '../contexts/AuthContext';
+import { formatarQuantidade } from '../utils/quantidade';
 
 interface LinhaItem {
   chave: number;
@@ -93,7 +94,7 @@ export function FormReceita() {
           itens: (r.itens ?? []).map((i) => ({
             chave: proximaChave++,
             nome: i.ingrediente.nome,
-            quantidade: i.quantidade?.toString() ?? '',
+            quantidade: i.quantidade !== null ? formatarQuantidade(i.quantidade) : '',
             unidade: i.unidade ?? '',
           })),
         });
@@ -173,7 +174,7 @@ export function FormReceita() {
       fotoUrl,
       itens: form.itens
         .filter((i) => i.nome.trim())
-        .map((i) => ({ nome: i.nome, quantidade: numeroOuNulo(i.quantidade), unidade: i.unidade || null })),
+        .map((i) => ({ nome: i.nome, quantidade: i.quantidade.trim() || null, unidade: i.unidade || null })),
     };
 
     try {
@@ -246,11 +247,11 @@ export function FormReceita() {
               />
               <input
                 className="item-qtd"
-                placeholder="Qtd."
-                inputMode="decimal"
+                placeholder="Qtd. (ex.: 1/2)"
                 value={item.quantidade}
                 onChange={(e) => alterarItem(item.chave, 'quantidade', e.target.value)}
                 aria-label={`Quantidade do ingrediente ${indice + 1}`}
+                title="Ex.: 2, 1/2, 1 1/2, 0,5 ou meia"
               />
               <select
                 className="item-unidade"

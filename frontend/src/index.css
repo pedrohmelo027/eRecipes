@@ -421,7 +421,7 @@ textarea { resize: vertical; }
 .grupo-itens > .botao { align-self: flex-start; }
 .linha-item { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .item-nome { flex: 3 1 180px; }
-.item-qtd { flex: 1 1 70px; }
+.item-qtd { flex: 1 1 110px; }
 .item-unidade { flex: 2 1 120px; }
 .linha-item-erro { flex-basis: 100%; }
 .acoes { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; }

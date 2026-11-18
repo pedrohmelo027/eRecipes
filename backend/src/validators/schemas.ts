@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { UNIDADES_MEDIDA } from '../models/UnidadeMedida';
 import { TipoUsuario } from '../models/Usuario';
+import { converterQuantidade } from '../utils/quantidade';
 import { FOTO_URL_REGEX } from '../services/FotoService';
 
 const texto = (campo: string, max: number) =>
@@ -51,11 +52,19 @@ const itemSchema = z
   .object({
     ingredienteId: z.coerce.number().int().positive().optional(),
     nome: z.string().trim().min(1).max(100).optional(),
-    quantidade: z.coerce
-      .number({ invalid_type_error: 'Quantidade deve ser um número' })
-      .positive('Quantidade deve ser maior que zero')
-      .max(999999.99)
-      .nullish(),
+    quantidade: z.preprocess(
+      (valor) => {
+        if (typeof valor !== 'string') return valor;
+        if (valor.trim() === '') return null;
+        const numero = converterQuantidade(valor);
+        return Number.isNaN(numero) ? valor : Math.round(numero * 100) / 100;
+      },
+      z
+        .number({ invalid_type_error: 'Quantidade inválida (ex.: 2, 1/2, 1 1/2 ou 0,5)' })
+        .positive('Quantidade deve ser maior que zero')
+        .max(999999.99)
+        .nullish(),
+    ),
     unidade: z
       .enum(UNIDADES_MEDIDA, { errorMap: () => ({ message: 'Escolha uma unidade da lista' }) })
       .nullish()
