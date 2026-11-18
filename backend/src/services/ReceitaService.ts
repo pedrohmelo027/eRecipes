@@ -1,5 +1,6 @@
 import { Transaction } from 'sequelize';
 import { Categoria, Ingrediente, ItemReceita, Receita, sequelize, TipoUsuario, Usuario } from '../models';
+import type { ResultadoBusca } from '../models/Receita';
 import type { UsuarioAutenticado } from '../middlewares/autenticacao';
 import { AppError, naoEncontrado, proibido } from '../utils/AppError';
 import type { DadosReceitaEntrada } from '../validators/schemas';
@@ -34,7 +35,7 @@ export class ReceitaService {
   }
 
   
-  static buscar(ingredientes: number[], categoria?: number): Promise<Receita[]> {
+  static buscar(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
     return Receita.buscarPorIngredientes(ingredientes, categoria);
   }
 

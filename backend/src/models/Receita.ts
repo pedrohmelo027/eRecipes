@@ -33,6 +33,8 @@ export interface DadosReceita {
   itens: DadosItemReceita[];
 }
 
+export type ResultadoBusca = InferAttributes<Receita> & { ingredientesFaltando: string[] };
+
 export class Receita extends Model<InferAttributes<Receita>, InferCreationAttributes<Receita>> {
   declare id: CreationOptional<number>;
   declare titulo: string;
@@ -62,7 +64,12 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
     }
   }
 
-  static async buscarPorIngredientes(ingredientes: number[], categoria?: number): Promise<Receita[]> {
+  /**
+   * Busca por ingredientes (RN06): retorna as receitas que usam ao menos um dos
+   * ingredientes informados, com a lista do que falta. As que dá para fazer só
+   * com o que o ator tem (nada faltando) vêm primeiro.
+   */
+  static async buscarPorIngredientes(ingredientes: number[], categoria?: number): Promise<ResultadoBusca[]> {
     if (!ingredientes.length) {
       throw new AppError(400, 'Informe ao menos um ingrediente', { ingredientes: 'Obrigatório' });
     }
@@ -70,12 +77,10 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
     const linhas = await sequelize.query<{ id: number }>(
       `SELECT r.id FROM receita r
          JOIN usuario u ON u.id = r.usuario_id AND u.ativo = TRUE
-        WHERE NOT EXISTS (
-                SELECT 1 FROM item_receita ir
-                 WHERE ir.receita_id = r.id
-                   AND ir.ingrediente_id NOT IN (:ingredientes)
-              )
-          AND (:categoria IS NULL OR r.categoria_id = :categoria)`,
+         JOIN item_receita ir ON ir.receita_id = r.id
+        WHERE (:categoria IS NULL OR r.categoria_id = :categoria)
+        GROUP BY r.id
+       HAVING SUM(ir.ingrediente_id IN (:ingredientes)) > 0`,
       {
         replacements: { ingredientes, categoria: categoria ?? null },
         type: QueryTypes.SELECT,
@@ -83,11 +88,25 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
     );
     if (!linhas.length) return [];
 
-    return Receita.findAll({
+    const receitas = await Receita.findAll({
       where: { id: linhas.map((l) => l.id) },
       include: Receita.includeCompleto,
-      order: [['titulo', 'ASC']],
     });
+
+    const tenho = new Set(ingredientes);
+    return receitas
+      .map((receita) => ({
+        ...receita.toJSON(),
+        ingredientesFaltando: (receita.itens ?? [])
+          .filter((item) => !tenho.has(item.ingrediente!.id))
+          .map((item) => item.ingrediente!.nome)
+          .sort((x, y) => x.localeCompare(y, 'pt-BR')),
+      }))
+      .sort(
+        (a, b) =>
+          a.ingredientesFaltando.length - b.ingredientesFaltando.length ||
+          a.titulo.localeCompare(b.titulo, 'pt-BR'),
+      );
   }
 }
 

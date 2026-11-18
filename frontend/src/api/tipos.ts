@@ -51,6 +51,11 @@ export interface Ingrediente {
   nome: string;
 }
 
+export interface IngredienteDisponivel extends Ingrediente {
+  /** Outros nomes do mesmo ingrediente (ex.: aipim e macaxeira para mandioca). */
+  sinonimos: string[];
+}
+
 export interface ItemReceita {
   quantidade: number | null;
   unidade: UnidadeMedida | null;
@@ -78,6 +83,11 @@ export interface Pagina<T> {
   total: number;
   pagina: number;
   limite: number;
+}
+
+export interface ResultadoBusca extends Receita {
+  /** Ingredientes da receita que não estão na lista informada. */
+  ingredientesFaltando: string[];
 }
 
 export interface ItemReceitaEntrada {
