@@ -44,6 +44,18 @@ describe('sinônimos de ingredientes', () => {
     expect(res.body.map((i: { nome: string }) => i.nome)).toEqual(['mandioca']);
   });
 
+  it('ignora acentos e maiúsculas no autocompletar e no cadastro', async () => {
+    const [acucar] = await criarIngredientes('açúcar mascavo');
+    const res = await request(app).get('/api/ingredientes?q=ACUCAR');
+    expect(res.body.map((i: { nome: string }) => i.nome)).toEqual(['açúcar mascavo']);
+    expect((await Ingrediente.obterOuCriar('Acucar Mascavo')).id).toBe(acucar.id);
+  });
+
+  it('trata % e _ como texto comum no autocompletar', async () => {
+    const res = await request(app).get('/api/ingredientes?q=%25');
+    expect(res.body).toEqual([]);
+  });
+
   it('mostra os sinônimos nos ingredientes disponíveis para a busca', async () => {
     const res = await request(app).get('/api/ingredientes/disponiveis');
     expect(res.body.find((i: { nome: string }) => i.nome === 'mandioca').sinonimos).toEqual(['aipim', 'macaxeira']);

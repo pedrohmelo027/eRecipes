@@ -28,10 +28,9 @@ export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
       data_criacao: { type: DataTypes.DATE, allowNull: false },
       data_atualizacao: { type: DataTypes.DATE, allowNull: false },
     },
-    { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
   );
 };
 
 export const down: MigrationFn<QueryInterface> = async ({ context: qi }) => {
-  await qi.dropTable('receita');
+  await qi.dropTable('receita', {});
 };

@@ -6,7 +6,7 @@ import type { DadosAtualizarUsuario } from '../validators/schemas';
 export class UsuarioService {
   static listar(termo?: string): Promise<Usuario[]> {
     const where = termo
-      ? { [Op.or]: [{ nome: { [Op.like]: `%${termo}%` } }, { email: { [Op.like]: `%${termo}%` } }] }
+      ? { [Op.or]: [{ nome: { [Op.iLike]: `%${termo}%` } }, { email: { [Op.iLike]: `%${termo}%` } }] }
       : {};
     return Usuario.findAll({ where, order: [['nome', 'ASC']] });
   }

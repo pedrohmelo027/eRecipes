@@ -39,7 +39,7 @@ export function tratarErros(erro: unknown, _req: Request, res: Response, _next: 
   }
 
   if (typeof erro === 'object' && erro !== null && (erro as { type?: string }).type === 'entity.too.large') {
-    res.status(413).json({ erro: 'Arquivo muito grande', campos: { foto: 'A imagem deve ter no máximo 5 MB' } });
+    res.status(413).json({ erro: 'Arquivo muito grande', campos: { foto: 'A imagem deve ter no máximo 4 MB' } });
     return;
   }
 

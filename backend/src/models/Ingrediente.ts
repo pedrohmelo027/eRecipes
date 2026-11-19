@@ -5,7 +5,6 @@ import {
   InferCreationAttributes,
   Model,
   NonAttribute,
-  Op,
   QueryTypes,
   Transaction,
 } from 'sequelize';
@@ -57,9 +56,10 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     if (duplicado && duplicado.id !== alvo.id) {
       const ids = { antigo: duplicado.id, novo: alvo.id };
       await sequelize.query(
-        `DELETE ir FROM item_receita ir
-           JOIN item_receita outro ON outro.receita_id = ir.receita_id AND outro.ingrediente_id = :novo
-          WHERE ir.ingrediente_id = :antigo`,
+        `DELETE FROM item_receita ir
+          USING item_receita outro
+          WHERE outro.receita_id = ir.receita_id AND outro.ingrediente_id = :novo
+            AND ir.ingrediente_id = :antigo`,
         { replacements: ids, transaction },
       );
       await sequelize.query('UPDATE item_receita SET ingrediente_id = :novo WHERE ingrediente_id = :antigo', {
@@ -103,22 +103,24 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
   static pesquisar(termo: string | undefined, limite = 20) {
     if (!termo) return Ingrediente.findAll({ order: [['nome', 'ASC']], limit: limite });
 
+    // A coluna nome usa a collation ci_ai (ignora maiúsculas/acentos), que não aceita LIKE;
+    // por isso o trecho é comparado sem acento com ILIKE sobre a collation "C".
     const normalizado = normalizarNomeIngrediente(termo);
     const escapado = normalizado.replace(/[\\%_]/g, (c) => `\\${c}`);
-    const padrao = sequelize.escape(`%${escapado}%`);
-    const relevancia = sequelize.literal(
-      `CASE WHEN nome = ${sequelize.escape(normalizado)} THEN 0
-            WHEN nome LIKE ${sequelize.escape(`${escapado}%`)} THEN 1
-            ELSE 2 END`,
-    );
+    const contem = (coluna: string) => `unaccent(${coluna} COLLATE "C") ILIKE unaccent(:contem)`;
     return Ingrediente.findAll({
-      where: {
-        [Op.or]: [
-          { nome: { [Op.like]: `%${escapado}%` } },
-          { id: { [Op.in]: sequelize.literal(`(SELECT ingrediente_id FROM ingrediente_sinonimo WHERE nome LIKE ${padrao})`) } },
-        ],
-      },
-      order: [relevancia, ['nome', 'ASC']],
+      where: sequelize.literal(
+        `(${contem('nome')} OR id IN (SELECT ingrediente_id FROM ingrediente_sinonimo WHERE ${contem('nome')}))`,
+      ),
+      order: [
+        sequelize.literal(
+          `CASE WHEN nome = :exato THEN 0
+                WHEN unaccent(nome COLLATE "C") ILIKE unaccent(:comeca) THEN 1
+                ELSE 2 END`,
+        ),
+        ['nome', 'ASC'],
+      ],
+      replacements: { exato: normalizado, contem: `%${escapado}%`, comeca: `${escapado}%` },
       limit: limite,
     });
   }

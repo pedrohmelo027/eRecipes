@@ -42,7 +42,7 @@ const vazio = (): Formulario => ({
 });
 
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
+const TAMANHO_MAXIMO_FOTO = 4 * 1024 * 1024;
 
 const numeroOuNulo = (valor: string) => (valor.trim() === '' ? null : Number(valor.replace(',', '.')));
 
@@ -123,7 +123,7 @@ export function FormReceita() {
       return;
     }
     if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
-      setCampos({ ...outros, fotoUrl: 'A imagem deve ter no máximo 5 MB' });
+      setCampos({ ...outros, fotoUrl: 'A imagem deve ter no máximo 4 MB' });
       return;
     }
     setCampos(outros);
@@ -311,7 +311,7 @@ export function FormReceita() {
           {campos.fotoUrl ? (
             <span className="erro-campo">{campos.fotoUrl}</span>
           ) : (
-            <span className="dica-campo">JPG, PNG, WEBP ou GIF de até 5 MB.</span>
+            <span className="dica-campo">JPG, PNG, WEBP ou GIF de até 4 MB.</span>
           )}
         </div>
 
