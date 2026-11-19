@@ -17,3 +17,6 @@ app.use('/api', rotas);
 
 app.use(rotaNaoEncontrada);
 app.use(tratarErros);
+
+// A Vercel usa o export default do src/app.ts como a Function da API.
+export default app;

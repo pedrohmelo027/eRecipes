@@ -1,9 +1,14 @@
+import pg from 'pg';
 import { Options, Sequelize } from 'sequelize';
 import { env } from './env';
 
 const opcoes: Options = {
   dialect: 'postgres',
+  // Import explícito para o bundler da Vercel incluir o driver (o Sequelize o carrega dinamicamente).
+  dialectModule: pg,
   logging: false,
+  // Na Vercel cada instância da Function abre poucas conexões; o pooler do Supabase faz o resto.
+  pool: process.env.VERCEL ? { max: 2, min: 0, idle: 5000, acquire: 10000 } : undefined,
   define: {
     underscored: true,
     freezeTableName: true,

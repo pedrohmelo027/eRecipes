@@ -6,7 +6,8 @@ import { env } from '../config/env';
 import { AppError, requisicaoInvalida } from '../utils/AppError';
 
 export const PREFIXO_FOTO = '/api/uploads/';
-export const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
+// A Vercel recusa requisições acima de 4,5 MB, então o limite das fotos é 4 MB.
+export const TAMANHO_MAXIMO_FOTO = 4 * 1024 * 1024;
 
 const EXTENSOES = ['jpg', 'png', 'webp', 'gif'] as const;
 type Extensao = (typeof EXTENSOES)[number];

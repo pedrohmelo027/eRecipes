@@ -53,8 +53,8 @@ describe('upload de foto da receita', () => {
     expect(res.body.campos.foto).toBeDefined();
   });
 
-  it('recusa imagens acima de 5 MB', async () => {
-    const res = await enviar(Buffer.concat([PNG, Buffer.alloc(6 * 1024 * 1024)]));
+  it('recusa imagens acima de 4 MB', async () => {
+    const res = await enviar(Buffer.concat([PNG, Buffer.alloc(5 * 1024 * 1024)]));
     expect(res.status).toBe(413);
   });
 
