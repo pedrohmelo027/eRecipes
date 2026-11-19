@@ -1,5 +1,6 @@
 import { DataTypes, QueryInterface } from 'sequelize';
 import type { MigrationFn } from 'umzug';
+import { UNIDADES } from '../../models/Unidade';
 
 export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
   await qi.createTable(
@@ -20,13 +21,12 @@ export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
         onUpdate: 'CASCADE',
       },
       quantidade: { type: DataTypes.DECIMAL(8, 2), allowNull: true },
-      unidade: { type: DataTypes.STRING(30), allowNull: true },
+      unidade: { type: DataTypes.ENUM(...UNIDADES), allowNull: true },
     },
-    { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
   );
   await qi.addIndex('item_receita', ['ingrediente_id']);
 };
 
 export const down: MigrationFn<QueryInterface> = async ({ context: qi }) => {
-  await qi.dropTable('item_receita');
+  await qi.dropTable('item_receita', {});
 };

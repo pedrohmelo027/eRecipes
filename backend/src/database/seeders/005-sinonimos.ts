@@ -25,7 +25,7 @@ const CORRECOES: Record<string, string> = { maça: 'maçã' };
 export const up: MigrationFn<Sequelize> = async () => {
   await sequelize.transaction(async (transaction) => {
     for (const [errado, certo] of Object.entries(CORRECOES)) {
-      await sequelize.query('UPDATE ingrediente SET nome = :certo WHERE nome = :errado COLLATE utf8mb4_bin', {
+      await sequelize.query('UPDATE ingrediente SET nome = :certo WHERE nome COLLATE "C" = :errado', {
         replacements: { certo, errado },
         transaction,
       });

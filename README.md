@@ -48,16 +48,17 @@ O projeto é feito 100% em **JavaScript/TypeScript**.
 
 - **Front-end:** [React](https://react.dev/) — interfaces dinâmicas e responsivas
 - **Back-end:** [Node.js](https://nodejs.org/) — API REST
-- **Banco de dados:** [MySQL](https://www.mysql.com/)
+- **Banco de dados:** [PostgreSQL](https://www.postgresql.org/) hospedado no [Supabase](https://supabase.com/)
+- **Fotos das receitas:** [Supabase Storage](https://supabase.com/docs/guides/storage)
 
 ### Arquitetura
 
-A aplicação segue uma **arquitetura MVC em camadas**, com front-end e back-end **desacoplados**: o cliente React consome a API Node.js, que concentra as regras de negócio e o acesso ao banco MySQL.
+A aplicação segue uma **arquitetura MVC em camadas**, com front-end e back-end **desacoplados**: o cliente React consome a API Node.js, que concentra as regras de negócio e o acesso ao banco PostgreSQL (Supabase).
 
 ```
 ┌──────────────┐   HTTP/JSON   ┌──────────────────────────────┐        ┌─────────┐
-│  React (UI)  │ ────────────► │  Node.js API                 │ ─────► │  MySQL  │
-│  front-end   │ ◄──────────── │  routes → controllers →      │ ◄───── │         │
+│  React (UI)  │ ────────────► │  Node.js API                 │ ─────► │ Postgres│
+│  front-end   │ ◄──────────── │  routes → controllers →      │ ◄───── │Supabase │
 └──────────────┘               │  services → models           │        └─────────┘
                                └──────────────────────────────┘
 ```
@@ -85,7 +86,7 @@ eRecipes/
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) 20 ou superior
-- [MySQL](https://www.mysql.com/) 8 ou superior
+- Um projeto no [Supabase](https://supabase.com/) (plano gratuito serve) **ou** um PostgreSQL 15+ local
 - npm (ou yarn/pnpm)
 
 ### 1. Clonar o repositório
@@ -95,12 +96,19 @@ git clone https://github.com/pedrohmelo027/eRecipes.git
 cd eRecipes
 ```
 
-### 2. Configurar o banco de dados
+### 2. Configurar o banco de dados e o storage
 
-Crie o banco no MySQL:
+**Opção A — Supabase (recomendado):** no painel do projeto, copie:
 
-```sql
-CREATE DATABASE erecipes;
+- a connection string em **Connect → Session pooler** → `DATABASE_URL`
+- a URL do projeto e a chave `service_role` em **Project Settings → API** → `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`
+
+O bucket público das fotos (`fotos-receitas`) é criado automaticamente no primeiro upload.
+
+**Opção B — Postgres local:** deixe `DATABASE_URL` e `SUPABASE_URL` vazias e preencha `DB_HOST`, `DB_PORT`, `DB_USER` e `DB_PASSWORD`. As fotos ficam na pasta `backend/uploads`. Para subir um Postgres rápido com Docker/Podman:
+
+```bash
+podman run -d --name erecipes-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17
 ```
 
 ### 3. Back-end
@@ -108,21 +116,12 @@ CREATE DATABASE erecipes;
 ```bash
 cd backend
 npm install
-cp .env.example .env   # preencha com os dados do seu banco
+cp .env.example .env   # preencha conforme a opção escolhida acima
+npm run db:setup       # cria as tabelas e os dados iniciais (seeds)
 npm run dev
 ```
 
-Exemplo de `.env`:
-
-```env
-PORT=3333
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=erecipes
-JWT_SECRET=troque_esta_chave
-```
+> Os testes (`npm test`) sempre usam o Postgres local definido em `DB_*` + `DB_NAME_TEST` e **nunca** o Supabase: o banco de teste é apagado a cada execução.
 
 ### 4. Front-end
 

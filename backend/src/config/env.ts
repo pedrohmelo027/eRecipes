@@ -18,9 +18,11 @@ export const env = {
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
 
   db: {
+    // Connection string do Supabase. Ignorada nos testes, para nunca apagar o banco de produção.
+    url: ehTeste ? undefined : process.env.DATABASE_URL || undefined,
     host: obrigatoria('DB_HOST', 'localhost'),
-    port: Number(process.env.DB_PORT ?? 3306),
-    user: obrigatoria('DB_USER'),
+    port: Number(process.env.DB_PORT ?? 5432),
+    user: process.env.DB_USER ?? 'postgres',
     password: process.env.DB_PASSWORD ?? '',
     name: ehTeste
       ? obrigatoria('DB_NAME_TEST', `${process.env.DB_NAME ?? 'erecipes'}_test`)
@@ -35,6 +37,13 @@ export const env = {
   uploadDir: path.resolve(
     process.env.UPLOAD_DIR ?? (ehTeste ? path.join(os.tmpdir(), 'erecipes-uploads-test') : 'uploads'),
   ),
+
+  // Supabase Storage para as fotos. Sem estas variáveis (ou nos testes), as fotos ficam em uploadDir.
+  supabase: {
+    url: ehTeste ? undefined : process.env.SUPABASE_URL || undefined,
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || undefined,
+    bucket: process.env.SUPABASE_BUCKET ?? 'fotos-receitas',
+  },
 
   admin: {
     nome: process.env.ADMIN_NOME ?? 'Administrador',

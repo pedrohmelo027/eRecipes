@@ -18,10 +18,10 @@ export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
       created_at: { type: DataTypes.DATE, allowNull: false },
       updated_at: { type: DataTypes.DATE, allowNull: false },
     },
-    { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
   );
 };
 
 export const down: MigrationFn<QueryInterface> = async ({ context: qi }) => {
-  await qi.dropTable('usuario');
+  await qi.dropTable('usuario', {});
+  await qi.sequelize.query('DROP TYPE IF EXISTS enum_usuario_tipo_usuario');
 };

@@ -8,10 +8,9 @@ export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
       nome: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     },
-    { charset: 'utf8mb4', collate: 'utf8mb4_unicode_ci' },
   );
 };
 
 export const down: MigrationFn<QueryInterface> = async ({ context: qi }) => {
-  await qi.dropTable('categoria');
+  await qi.dropTable('categoria', {});
 };

@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
-import mysql from 'mysql2/promise';
-import { env } from '../src/config/env';
+import { criarBanco } from '../src/database/criarBanco';
 import { migrator } from '../src/database/migrator';
 import { CATEGORIAS } from '../src/database/seeders/001-categorias';
 import { Categoria, Ingrediente, ItemReceita, Receita, sequelize, TipoUsuario, Usuario } from '../src/models';
@@ -8,20 +7,8 @@ import { AuthService } from '../src/services/AuthService';
 import { Unidade } from '../src/models/Unidade';
 
 export async function resetarBanco() {
-  const conexao = await mysql.createConnection({
-    host: env.db.host,
-    port: env.db.port,
-    user: env.db.user,
-    password: env.db.password,
-  });
-  await conexao.query(
-    `CREATE DATABASE IF NOT EXISTS \`${env.db.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
-  );
-  await conexao.end();
-
-  await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-  await sequelize.getQueryInterface().dropAllTables();
-  await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+  await criarBanco();
+  await sequelize.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   await migrator.up();
   await Categoria.bulkCreate(CATEGORIAS.map((nome) => ({ nome })));
 }
