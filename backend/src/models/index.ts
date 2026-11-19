@@ -1,9 +1,9 @@
 import { sequelize } from '../config/database';
 import { Categoria } from './Categoria';
 import { Ingrediente } from './Ingrediente';
-import { IngredienteSinonimo } from './IngredienteSinonimo';
 import { ItemReceita } from './ItemReceita';
 import { Receita } from './Receita';
+import { Sinonimo } from './Sinonimo';
 import { TipoUsuario, Usuario } from './Usuario';
 
 Usuario.hasMany(Receita, { foreignKey: 'usuarioId', as: 'receitas' });
@@ -18,8 +18,8 @@ ItemReceita.belongsTo(Receita, { foreignKey: 'receitaId', as: 'receita' });
 Ingrediente.hasMany(ItemReceita, { foreignKey: 'ingredienteId', as: 'itens', onDelete: 'RESTRICT' });
 ItemReceita.belongsTo(Ingrediente, { foreignKey: 'ingredienteId', as: 'ingrediente' });
 
-Ingrediente.hasMany(IngredienteSinonimo, { foreignKey: 'ingredienteId', as: 'sinonimos', onDelete: 'CASCADE' });
-IngredienteSinonimo.belongsTo(Ingrediente, { foreignKey: 'ingredienteId', as: 'ingrediente' });
+// Auto-associação "sinonimo" do diagrama de classes.
+Ingrediente.belongsTo(Ingrediente, { foreignKey: 'sinonimoId', as: 'sinonimo', onDelete: 'SET NULL' });
 
 Receita.includeCompleto = [
   { model: Categoria, as: 'categoria' },
@@ -28,8 +28,8 @@ Receita.includeCompleto = [
     model: ItemReceita,
     as: 'itens',
     attributes: ['quantidade', 'unidade'],
-    include: [{ model: Ingrediente, as: 'ingrediente' }],
+    include: [{ model: Ingrediente, as: 'ingrediente', attributes: ['id', 'nome'] }],
   },
 ];
 
-export { sequelize, Categoria, Ingrediente, IngredienteSinonimo, ItemReceita, Receita, TipoUsuario, Usuario };
+export { sequelize, Categoria, Ingrediente, ItemReceita, Receita, Sinonimo, TipoUsuario, Usuario };

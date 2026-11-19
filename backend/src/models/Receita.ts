@@ -12,6 +12,7 @@ import {
 import { sequelize } from '../config/database';
 import { AppError } from '../utils/AppError';
 import type { Categoria } from './Categoria';
+import { Ingrediente } from './Ingrediente';
 import type { ItemReceita } from './ItemReceita';
 import type { Unidade } from './Unidade';
 import type { Usuario } from './Usuario';
@@ -69,10 +70,12 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
       throw new AppError(400, 'Informe ao menos um ingrediente', { ingredientes: 'Obrigatório' });
     }
 
+    // Quem tem mandioca também tem aipim e macaxeira: a busca considera os sinônimos de cada ingrediente.
+    const equivalentes = await Ingrediente.comSinonimos(ingredientes);
     const itens = sequelize.models.ItemReceita as typeof ItemReceita;
     const usadas = await itens.findAll({
       attributes: ['receitaId'],
-      where: { ingredienteId: ingredientes },
+      where: { ingredienteId: equivalentes },
       group: ['receitaId'],
     });
     if (!usadas.length) return [];
@@ -87,7 +90,7 @@ export class Receita extends Model<InferAttributes<Receita>, InferCreationAttrib
       ),
     });
 
-    const disponiveis = new Set(ingredientes);
+    const disponiveis = new Set(equivalentes);
     return receitas
       .map((receita) => ({ ...receita.toJSON(), ingredientesFaltando: Receita.faltando(receita, disponiveis) }))
       .sort(

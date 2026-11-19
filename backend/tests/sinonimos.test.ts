@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { app } from '../src/app';
-import { Categoria, Ingrediente, IngredienteSinonimo, ItemReceita } from '../src/models';
+import { Categoria, Ingrediente, Sinonimo } from '../src/models';
 import { criarIngredientes, criarReceita, criarUsuario, fecharBanco, resetarBanco } from './helpers';
 
 let autor: Awaited<ReturnType<typeof criarUsuario>>;
@@ -9,12 +9,14 @@ let categoriaId: number;
 const nomesDaReceita = async (id: number) =>
   (await request(app).get(`/api/receitas/${id}`)).body.itens.map((i: { ingrediente: { nome: string } }) => i.ingrediente.nome).sort();
 
+const porNome = async (nome: string) => (await Ingrediente.findOne({ where: { nome } }))!;
+
 beforeAll(async () => {
   await resetarBanco();
   autor = await criarUsuario();
   categoriaId = (await Categoria.findOne({ where: { nome: 'Lanches' } }))!.id;
-  await Ingrediente.registrarSinonimo('aipim', 'mandioca');
-  await Ingrediente.registrarSinonimo('macaxeira', 'mandioca');
+  await Ingrediente.registrarSinonimo('mandioca', 'aipim');
+  await Ingrediente.registrarSinonimo('macaxeira', 'aipim');
 });
 afterAll(fecharBanco);
 
@@ -24,11 +26,30 @@ const cadastrar = (...nomes: string[]) =>
     .set('Authorization', autor.auth)
     .send({ titulo: 'Teste', categoriaId, modoPreparo: 'Faça.', itens: nomes.map((nome) => ({ nome })) });
 
-describe('sinônimos de ingredientes', () => {
-  it('grava o nome principal quando a receita usa um sinônimo', async () => {
+const buscar = (...ids: number[]) =>
+  request(app).get(`/api/receitas/busca?ingredientes=${ids.join(',')}`).set('Authorization', autor.auth);
+
+describe('sinônimos de ingredientes (auto-associação)', () => {
+  it('cada sinônimo é um ingrediente marcado como SINONIMO e ligado ao mesmo grupo', async () => {
+    const [mandioca, aipim, macaxeira] = await Promise.all(['mandioca', 'aipim', 'macaxeira'].map(porNome));
+    for (const i of [mandioca, aipim, macaxeira]) expect(i.tipo).toBe(Sinonimo.SINONIMO);
+    const grupos = new Set([mandioca, aipim, macaxeira].map((i) => i.sinonimoId ?? i.id));
+    expect(grupos.size).toBe(1);
+    expect(await Ingrediente.comSinonimos([macaxeira.id])).toEqual(
+      expect.arrayContaining([mandioca.id, aipim.id, macaxeira.id]),
+    );
+  });
+
+  it('ingrediente sem sinônimos fica como PADRAO', async () => {
+    const [sal] = await criarIngredientes('sal');
+    expect(sal.tipo).toBe(Sinonimo.PADRAO);
+    expect(sal.sinonimoId).toBeNull();
+  });
+
+  it('a receita mantém o nome que o autor usou', async () => {
     const res = await cadastrar('Aipim', 'sal');
     expect(res.status).toBe(201);
-    expect(await nomesDaReceita(res.body.id)).toEqual(['mandioca', 'sal']);
+    expect(await nomesDaReceita(res.body.id)).toEqual(['aipim', 'sal']);
   });
 
   it('reconhece o plural de um ingrediente já cadastrado', async () => {
@@ -39,9 +60,9 @@ describe('sinônimos de ingredientes', () => {
     expect(await nomesDaReceita(outra.body.id)).toEqual(['limões']);
   });
 
-  it('acha pelo sinônimo no autocompletar', async () => {
+  it('acha o sinônimo pelo próprio nome no autocompletar', async () => {
     const res = await request(app).get('/api/ingredientes?q=macax');
-    expect(res.body.map((i: { nome: string }) => i.nome)).toEqual(['mandioca']);
+    expect(res.body.map((i: { nome: string }) => i.nome)).toEqual(['macaxeira']);
   });
 
   it('ignora acentos e maiúsculas no autocompletar e no cadastro', async () => {
@@ -56,29 +77,41 @@ describe('sinônimos de ingredientes', () => {
     expect(res.body).toEqual([]);
   });
 
-  it('mostra os sinônimos nos ingredientes disponíveis para a busca', async () => {
+  it('mostra os outros nomes do grupo nos ingredientes disponíveis para a busca', async () => {
     const res = await request(app).get('/api/ingredientes/disponiveis');
-    expect(res.body.find((i: { nome: string }) => i.nome === 'mandioca').sinonimos).toEqual(['aipim', 'macaxeira']);
+    const aipim = res.body.find((i: { nome: string }) => i.nome === 'aipim');
+    expect(aipim.sinonimos).toEqual(['macaxeira', 'mandioca']);
+    expect(res.body.find((i: { nome: string }) => i.nome === 'sal').sinonimos).toEqual([]);
   });
 
-  it('a busca pelo ingrediente principal acha receitas cadastradas com o sinônimo', async () => {
-    const mandioca = await Ingrediente.findOne({ where: { nome: 'mandioca' } });
-    const res = await request(app)
-      .get(`/api/receitas/busca?ingredientes=${mandioca!.id}`)
-      .set('Authorization', autor.auth);
-    expect(res.body.length).toBeGreaterThan(0);
+  it('buscar por um nome acha receitas cadastradas com qualquer sinônimo, sem marcá-lo como faltando', async () => {
+    const mandioca = await porNome('mandioca');
+    const sal = await porNome('sal');
+    const res = await buscar(mandioca.id, sal.id);
+    const receita = res.body.find((r: { itens: { ingrediente: { nome: string } }[] }) =>
+      r.itens.some((i) => i.ingrediente.nome === 'aipim'),
+    );
+    expect(receita).toBeDefined();
+    expect(receita.ingredientesFaltando).toEqual([]);
   });
 
-  it('unifica um ingrediente duplicado ao registrar o sinônimo', async () => {
+  it('registrar sinônimo entre ingredientes já usados mantém os dois nomes nas receitas', async () => {
     const [farinha, trigo, ovo] = await criarIngredientes('farinha de trigo', 'trigo', 'ovo');
     const soTrigo = await criarReceita(autor.usuario.id, [trigo, ovo], { titulo: 'Só trigo' });
-    const ambos = await criarReceita(autor.usuario.id, [trigo, farinha], { titulo: 'Os dois' });
 
     await Ingrediente.registrarSinonimo('trigo', 'farinha de trigo');
 
-    expect(await Ingrediente.findOne({ where: { nome: 'trigo' } })).toBeNull();
-    expect((await IngredienteSinonimo.findOne({ where: { nome: 'trigo' } }))!.ingredienteId).toBe(farinha.id);
-    expect(await nomesDaReceita(soTrigo.id)).toEqual(['farinha de trigo', 'ovo']);
-    expect(await ItemReceita.count({ where: { receitaId: ambos.id } })).toBe(1);
+    expect(await nomesDaReceita(soTrigo.id)).toEqual(['ovo', 'trigo']);
+    const res = await buscar(farinha.id, ovo.id);
+    const achada = res.body.find((r: { id: number }) => r.id === soTrigo.id);
+    expect(achada.ingredientesFaltando).toEqual([]);
+  });
+
+  it('junta dois grupos de sinônimos num só', async () => {
+    await Ingrediente.registrarSinonimo('tangerina', 'mexerica');
+    await Ingrediente.registrarSinonimo('bergamota', 'mimosa');
+    await Ingrediente.registrarSinonimo('mexerica', 'bergamota');
+    const ids = await Promise.all(['tangerina', 'mexerica', 'bergamota', 'mimosa'].map(async (n) => (await porNome(n)).id));
+    expect((await Ingrediente.comSinonimos([ids[0]])).sort()).toEqual([...ids].sort());
   });
 });

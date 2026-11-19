@@ -1,6 +1,7 @@
 import {
   CreationOptional,
   DataTypes,
+  ForeignKey,
   InferAttributes,
   InferCreationAttributes,
   Model,
@@ -10,7 +11,7 @@ import {
 } from 'sequelize';
 import { sequelize } from '../config/database';
 import { formasPlurais, formasSingulares, normalizarNomeIngrediente } from '../utils/normalizar';
-import { IngredienteSinonimo } from './IngredienteSinonimo';
+import { Sinonimo, SINONIMOS_TIPOS } from './Sinonimo';
 
 export interface IngredienteDisponivel {
   id: number;
@@ -18,17 +19,21 @@ export interface IngredienteDisponivel {
   sinonimos: string[];
 }
 
+// Dois ingredientes são sinônimos quando estão no mesmo grupo. O grupo é identificado pelo id do
+// ingrediente a que os outros apontam (sinonimo_id); esse ingrediente é só a ligação, não um nome principal.
+const GRUPO = (tabela: string) => `COALESCE(${tabela}.sinonimo_id, ${tabela}.id)`;
+
 export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreationAttributes<Ingrediente>> {
   declare id: CreationOptional<number>;
   declare nome: string;
+  declare tipo: CreationOptional<Sinonimo>;
+  declare sinonimoId: ForeignKey<Ingrediente['id']> | null;
 
-  declare sinonimos?: NonAttribute<IngredienteSinonimo[]>;
+  declare sinonimo?: NonAttribute<Ingrediente>;
 
   static async resolver(nome: string, transaction?: Transaction): Promise<Ingrediente | null> {
     const normalizado = normalizarNomeIngrediente(nome);
     for (const candidato of [normalizado, ...formasSingulares(normalizado), ...formasPlurais(normalizado)]) {
-      const sinonimo = await IngredienteSinonimo.findOne({ where: { nome: candidato }, transaction });
-      if (sinonimo) return Ingrediente.findByPk(sinonimo.ingredienteId, { transaction });
       const ingrediente = await Ingrediente.findOne({ where: { nome: candidato }, transaction });
       if (ingrediente) return ingrediente;
     }
@@ -47,35 +52,34 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     return ingrediente;
   }
 
-  static async registrarSinonimo(sinonimo: string, principal: string, transaction?: Transaction): Promise<void> {
-    const nomeSinonimo = normalizarNomeIngrediente(sinonimo);
-    const alvo = await Ingrediente.obterOuCriar(principal, transaction);
-    if (nomeSinonimo.localeCompare(alvo.nome, 'pt-BR', { sensitivity: 'base' }) === 0) return;
+  /** Marca os dois ingredientes (criando-os se preciso) como sinônimos, juntando os grupos de cada um. */
+  static async registrarSinonimo(nome: string, outro: string, transaction?: Transaction): Promise<void> {
+    const a = await Ingrediente.obterOuCriar(nome, transaction);
+    const b = await Ingrediente.obterOuCriar(outro, transaction);
+    const grupoA = a.sinonimoId ?? a.id;
+    const grupoB = b.sinonimoId ?? b.id;
+    if (grupoA === grupoB) return;
 
-    const duplicado = await Ingrediente.findOne({ where: { nome: nomeSinonimo }, transaction });
-    if (duplicado && duplicado.id !== alvo.id) {
-      const ids = { antigo: duplicado.id, novo: alvo.id };
-      await sequelize.query(
-        `DELETE FROM item_receita ir
-          USING item_receita outro
-          WHERE outro.receita_id = ir.receita_id AND outro.ingrediente_id = :novo
-            AND ir.ingrediente_id = :antigo`,
-        { replacements: ids, transaction },
-      );
-      await sequelize.query('UPDATE item_receita SET ingrediente_id = :novo WHERE ingrediente_id = :antigo', {
-        replacements: ids,
-        transaction,
-      });
-      await sequelize.query('UPDATE ingrediente_sinonimo SET ingrediente_id = :novo WHERE ingrediente_id = :antigo', {
-        replacements: ids,
-        transaction,
-      });
-      await duplicado.destroy({ transaction });
-    }
+    await sequelize.query(
+      `UPDATE ingrediente SET sinonimo_id = :grupoA, tipo = :tipo WHERE id = :grupoB OR sinonimo_id = :grupoB`,
+      { replacements: { grupoA, grupoB, tipo: Sinonimo.SINONIMO }, transaction },
+    );
+    await sequelize.query('UPDATE ingrediente SET tipo = :tipo WHERE id = :grupoA', {
+      replacements: { grupoA, tipo: Sinonimo.SINONIMO },
+      transaction,
+    });
+  }
 
-    const existente = await IngredienteSinonimo.findOne({ where: { nome: nomeSinonimo }, transaction });
-    if (existente) await existente.update({ ingredienteId: alvo.id }, { transaction });
-    else await IngredienteSinonimo.create({ nome: nomeSinonimo, ingredienteId: alvo.id }, { transaction });
+  /** Os ids informados mais os de todos os seus sinônimos. */
+  static async comSinonimos(ids: number[], transaction?: Transaction): Promise<number[]> {
+    if (!ids.length) return [];
+    const linhas = await sequelize.query<{ id: number }>(
+      `SELECT DISTINCT g.id FROM ingrediente i
+         JOIN ingrediente g ON ${GRUPO('g')} = ${GRUPO('i')}
+        WHERE i.id IN (:ids)`,
+      { replacements: { ids }, type: QueryTypes.SELECT, transaction },
+    );
+    return linhas.map((l) => l.id);
   }
 
   static async disponiveis(): Promise<IngredienteDisponivel[]> {
@@ -89,14 +93,17 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     );
     if (!linhas.length) return [];
 
-    const sinonimos = await IngredienteSinonimo.findAll({
-      where: { ingredienteId: linhas.map((l) => l.id) },
-      order: [['nome', 'ASC']],
-    });
+    const sinonimos = await sequelize.query<{ id: number; nome: string }>(
+      `SELECT i.id, g.nome FROM ingrediente i
+         JOIN ingrediente g ON ${GRUPO('g')} = ${GRUPO('i')} AND g.id <> i.id
+        WHERE i.id IN (:ids) AND i.tipo = :tipo
+        ORDER BY g.nome ASC`,
+      { replacements: { ids: linhas.map((l) => l.id), tipo: Sinonimo.SINONIMO }, type: QueryTypes.SELECT },
+    );
     return linhas.map((l) => ({
       id: l.id,
       nome: l.nome,
-      sinonimos: sinonimos.filter((s) => s.ingredienteId === l.id).map((s) => s.nome),
+      sinonimos: sinonimos.filter((s) => s.id === l.id).map((s) => s.nome),
     }));
   }
 
@@ -107,11 +114,8 @@ export class Ingrediente extends Model<InferAttributes<Ingrediente>, InferCreati
     // por isso o trecho é comparado sem acento com ILIKE sobre a collation "C".
     const normalizado = normalizarNomeIngrediente(termo);
     const escapado = normalizado.replace(/[\\%_]/g, (c) => `\\${c}`);
-    const contem = (coluna: string) => `unaccent(${coluna} COLLATE "C") ILIKE unaccent(:contem)`;
     return Ingrediente.findAll({
-      where: sequelize.literal(
-        `(${contem('nome')} OR id IN (SELECT ingrediente_id FROM ingrediente_sinonimo WHERE ${contem('nome')}))`,
-      ),
+      where: sequelize.literal(`unaccent(nome COLLATE "C") ILIKE unaccent(:contem)`),
       order: [
         sequelize.literal(
           `CASE WHEN nome = :exato THEN 0
@@ -130,6 +134,8 @@ Ingrediente.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     nome: { type: DataTypes.STRING(100), allowNull: false, unique: true },
+    tipo: { type: DataTypes.ENUM(...SINONIMOS_TIPOS), allowNull: false, defaultValue: Sinonimo.PADRAO },
+    sinonimoId: { type: DataTypes.INTEGER, allowNull: true },
   },
   { sequelize, tableName: 'ingrediente', timestamps: false },
 );
