@@ -9,7 +9,15 @@ export const up: MigrationFn<QueryInterface> = async ({ context: qi }) => {
     `CREATE COLLATION IF NOT EXISTS ${COLLATION} (provider = icu, locale = 'und-u-ks-level1', deterministic = false)`,
   );
   // unaccent: usada na busca por trecho do nome (LIKE não funciona com collation não determinística).
-  await qi.sequelize.query('CREATE EXTENSION IF NOT EXISTS unaccent');
+  // No Supabase as extensões ficam no schema "extensions" (que já está no search_path).
+  await qi.sequelize.query(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'extensions') THEN
+        CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA extensions;
+      ELSE
+        CREATE EXTENSION IF NOT EXISTS unaccent;
+      END IF;
+    END $$;`);
   await qi.createTable('ingrediente', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     nome: { type: `VARCHAR(100) COLLATE ${COLLATION}`, allowNull: false, unique: true },
